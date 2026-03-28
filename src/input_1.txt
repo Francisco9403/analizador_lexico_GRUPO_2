@@ -1,0 +1,13 @@
+{* Comentario de prueba 
+   del Grupo 2 *}
+PROGRAM
+    integer: a, b
+    float: resultado
+    
+    a = 10
+    b = 20 % comentario de linea
+    
+    IF (a < b)
+        resultado = suma_cumulativa(a, [1.5, 2.0, b])
+        PRINT("El resultado es: ", resultado)
+    FIN
