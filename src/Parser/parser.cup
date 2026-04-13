@@ -1,17 +1,20 @@
 package Parser;
 import java_cup.runtime.*;
-
+import Exception.SyntaxException;
 class Parser;
 
 parser code {:
     public void syntax_error(Symbol s){
-        System.out.println("Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '"
-        + s.value + "' . Simbolo n° " + s.sym + " no reconocido." );
+        // Esto solo imprime un aviso temporal en consola
+        System.out.println("Aviso: Error sintáctico cerca de la línea " + (s.left + 1));
     }
 
     public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
-        System.out.println("Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '"
-        + s.value + "' . Simbolo n° " + s.sym + " no reconocido." );
+        // Construimos el mensaje y LANZAMOS la excepción
+        String mensaje = "Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '" + s.value + "' no esperado.";
+
+        // Lanzamos la excepción directamente
+        throw new SyntaxException(mensaje);
     }
 :};
 
@@ -24,55 +27,109 @@ terminal String COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, C
 terminal String ASIG, AND, OR, NOT;
 terminal String PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
 
+/* Terminal fantasma para la precedencia del menos unario (ej: -5) */
+terminal UMENOS;
+
+/* --- DECLARACION DE NO TERMINALES --- */
 nonterminal String program;
-nonterminal Object body, token_item;
+nonterminal Object bloque_declaraciones, declaracion;
+nonterminal Object tipo, lista_ids;
+nonterminal Object bloque_sentencias, sentencia;
+nonterminal Object asignacion, impresion, lectura;
+nonterminal Object sentencia_if, sentencia_while;
+nonterminal Object expresion, lista_expresiones, arreglo_literal;
+
+/* --- PRECEDENCIA Y ASOCIATIVIDAD (De menor a mayor prioridad) --- */
+/* Según la tabla del enunciado del TP */
+precedence right OR;
+precedence right AND;
+precedence right NOT;
+precedence nonassoc COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR, COMP_MAYOR_IGUAL, COMP_MENOR, COMP_MENOR_IGUAL;
+precedence left OP_SUMA, OP_RESTA;
+precedence left OP_MULT, OP_DIV;
+precedence left UMENOS;
 
 start with program;
 
-program ::= PROGRAM body FIN {: RESULT = "Programa valido"; :};
+/* --------------------------------------------------------
+   1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
+   -------------------------------------------------------- */
+program ::= PROGRAM bloque_declaraciones bloque_sentencias FIN
+            {: RESULT = "Programa valido. Estructura y matematicas correctas!"; :};
 
-body ::= {: RESULT = null; :}
-       | body token_item {: RESULT = null; :};
+/* --------------------------------------------------------
+   2. ZONA DE DECLARACION DE VARIABLES
+   -------------------------------------------------------- */
+bloque_declaraciones ::= bloque_declaraciones declaracion
+                       | /* vacio (puede no haber declaraciones) */ ;
 
-token_item ::= IF
-             | ELIF
-             | ELSE
-             | WHILE
-             | ALT_WHILE
-             | BREAK
-             | CONTINUE
-             | PRINT
-             | TYPE_INT
-             | TYPE_FLOAT
-             | TYPE_BOOL
-             | TYPE_ARRAY
-             | READ_INT
-             | READ_FLOAT
-             | READ_BOOL
-             | CONST_BOOL
-             | SUMA_ACUM
-             | ID
-             | CTE_INT
-             | CTE_FLOAT
-             | CTE_STR
-             | OP_SUMA
-             | OP_RESTA
-             | OP_MULT
-             | OP_DIV
-             | COMP_IGUAL
-             | COMP_DISTINTO
-             | COMP_MAYOR_IGUAL
-             | COMP_MENOR_IGUAL
-             | COMP_MAYOR
-             | COMP_MENOR
-             | ASIG
-             | AND
-             | OR
-             | NOT
-             | PAR_A
-             | PAR_C
-             | CORCH_A
-             | CORCH_C
-             | COMA
-             | DOS_PUNTOS
-             ;
+declaracion ::= tipo DOS_PUNTOS lista_ids ;
+
+tipo ::= TYPE_INT | TYPE_FLOAT | TYPE_BOOL | TYPE_ARRAY ;
+
+lista_ids ::= lista_ids COMA ID
+            | ID ;
+
+/* --------------------------------------------------------
+   3. ZONA DE SENTENCIAS (Cuerpo del programa)
+   -------------------------------------------------------- */
+bloque_sentencias ::= bloque_sentencias sentencia
+                    | sentencia ;
+
+sentencia ::= asignacion
+            | impresion
+            | sentencia_if
+            | sentencia_while
+            | BREAK
+            | CONTINUE ;
+
+asignacion ::= ID ASIG expresion ;
+
+impresion ::= PRINT PAR_A lista_expresiones PAR_C ;
+
+/* NOTA: Como aún no implementamos la indentación en el Lexer,
+   estas sentencias van a agrupar to do lo que tengan debajo. */
+sentencia_if ::= IF PAR_A expresion PAR_C bloque_sentencias ;
+
+sentencia_while ::= WHILE PAR_A expresion PAR_C bloque_sentencias ;
+
+/* --------------------------------------------------------
+   4. EXPRESIONES Y MATEMATICAS
+   -------------------------------------------------------- */
+expresion ::= expresion OP_SUMA expresion
+            | expresion OP_RESTA expresion
+            | expresion OP_MULT expresion
+            | expresion OP_DIV expresion
+            | expresion COMP_IGUAL expresion
+            | expresion COMP_DISTINTO expresion
+            | expresion COMP_MAYOR expresion
+            | expresion COMP_MENOR expresion
+            | expresion COMP_MAYOR_IGUAL expresion
+            | expresion COMP_MENOR_IGUAL expresion
+            | expresion AND expresion
+            | expresion OR expresion
+            | NOT expresion
+            | OP_RESTA expresion %prec UMENOS
+            | PAR_A expresion PAR_C
+            | ID
+            | CTE_INT
+            | CTE_FLOAT
+            | CTE_STR
+            | CONST_BOOL
+            | arreglo_literal
+            /* FUNCIONES DE LECTURA */
+            | READ_INT PAR_A PAR_C
+            | READ_FLOAT PAR_A PAR_C
+            | READ_BOOL PAR_A PAR_C
+            /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
+            | SUMA_ACUM PAR_A expresion COMA arreglo_literal PAR_C
+            ;
+
+/* --------------------------------------------------------
+   5. ARREGLOS Y LISTAS
+   -------------------------------------------------------- */
+arreglo_literal ::= CORCH_A lista_expresiones CORCH_C
+                  | CORCH_A CORCH_C ; /* Arreglo vacio */
+
+lista_expresiones ::= lista_expresiones COMA expresion
+                    | expresion ;

@@ -1,17 +1,13 @@
 package service;
-
-import Lexer.Lexer;
 import Parser.Parser;
 import Parser.CupScannerAdapter;
-
+import Lexer.Lexer;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
 import Lexer.Token;
 import Exception.SyntaxException;
-import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.Symbol;
-
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
  */
@@ -30,7 +26,7 @@ public class CompilerService {
 
             out.append("\n=== ANALISIS SINTACTICO ===\n");
             CupScannerAdapter scanner = new CupScannerAdapter(tokens);
-            Parser parser = new Parser(scanner, new ComplexSymbolFactory());
+            Parser parser = new Parser(scanner);
             Symbol result = parser.parse();
             if (result != null && result.value != null) {
                 out.append("Resultado: ").append(result.value).append('\n');
@@ -50,7 +46,7 @@ public class CompilerService {
         List<Token> tokens = new ArrayList<>();
 
         Token token;
-        while ((token = lexer.next_token()) != null) {
+        while ((token = lexer.yylex()) != null) {
             tokens.add(token);
         }
 

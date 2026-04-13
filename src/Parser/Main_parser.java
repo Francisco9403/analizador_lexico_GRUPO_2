@@ -2,9 +2,8 @@ package Parser;
 import java.io.FileReader;
 import java_cup.runtime.ComplexSymbolFactory;
 import java_cup.runtime.SymbolFactory;
-import Lexer.Lexer;
 import Lexer.Token;
-
+import Lexer.Lexer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -25,13 +24,12 @@ public class Main_parser {
 
         List<Token> tokens = new ArrayList<>();
         Token token;
-        while ((token = lexer.next_token()) != null) {
+        while ((token = lexer.yylex()) != null) {
             tokens.add(token);
         }
-        
-     
-        SymbolFactory sf = new ComplexSymbolFactory();
-        Parser parser= new Parser(new CupScannerAdapter(tokens), sf);
+
+
+        Parser parser = new Parser(new CupScannerAdapter(tokens));
         try{
             parser.parse();
             System.out.println("Análisis sintáctico finalizado.");}

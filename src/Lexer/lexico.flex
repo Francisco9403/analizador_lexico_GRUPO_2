@@ -1,4 +1,4 @@
-
+package Lexer;
 
 /**
  * Analizador Léxico para el TPI - Grupo 2
@@ -7,7 +7,6 @@
 
 %public
 %class Lexer
-%cup
 %unicode
 %type Token
 %line
@@ -28,9 +27,6 @@
         return new Token(nombre, this.yyline + 1, this.yycolumn + 1, valor);
     }
 
-    public Token next_token() throws java.io.IOException {
-        return yylex();
-    }
 %}
 
 /* Macros */
