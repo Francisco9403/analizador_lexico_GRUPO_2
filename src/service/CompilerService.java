@@ -1,6 +1,16 @@
+package service;
+
+import Lexer.Lexer;
+import Parser.Parser;
+import Parser.CupScannerAdapter;
+
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.List;
+import Lexer.Token;
+import Exception.SyntaxException;
+import java_cup.runtime.ComplexSymbolFactory;
+import java_cup.runtime.Symbol;
 
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
@@ -19,9 +29,12 @@ public class CompilerService {
             }
 
             out.append("\n=== ANALISIS SINTACTICO ===\n");
-            Parser parser = new Parser(tokens);
-            String trace = parser.parse();
-            out.append(trace);
+            CupScannerAdapter scanner = new CupScannerAdapter(tokens);
+            Parser parser = new Parser(scanner, new ComplexSymbolFactory());
+            Symbol result = parser.parse();
+            if (result != null && result.value != null) {
+                out.append("Resultado: ").append(result.value).append('\n');
+            }
             out.append("\nCompilacion finalizada sin errores.\n");
         } catch (SyntaxException e) {
             out.append("\n[ERROR SINTACTICO] ").append(e.getMessage()).append('\n');

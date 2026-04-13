@@ -1,3 +1,5 @@
+package Lexer;
+
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -17,7 +19,7 @@ public class Main_lexer {
         Scanner teclado = new Scanner(System.in);
 
         try (teclado) {
-            CompilerService compilerService = new CompilerService();
+            service.CompilerService compilerService = new service.CompilerService();
             System.out.println("=== Analizador Léxico ===");
             System.out.println("¿Desde dónde desea leer?");
             System.out.println("  1 - Desde consola");

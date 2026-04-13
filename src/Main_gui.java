@@ -1,3 +1,5 @@
+import gui.CompilerFrame;
+
 import javax.swing.SwingUtilities;
 
 //MAINN ENTRY POINT

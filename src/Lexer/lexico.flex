@@ -1,4 +1,4 @@
-import java.io.*;
+
 
 /**
  * Analizador Léxico para el TPI - Grupo 2
@@ -7,6 +7,7 @@ import java.io.*;
 
 %public
 %class Lexer
+%cup
 %unicode
 %type Token
 %line
@@ -80,7 +81,7 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   /* TEMA ESPECIAL: Grupo 2 */
   "suma_cumulativa"    { return token("SUMA_ACUM", yytext()); }
 
-  /* Token de corte (del ejemplo del profe) */
+  /* Lexer.Token de corte (del ejemplo del profe) */
   "FIN"                { return token("FIN", yytext()); }
 
   /* Identificadores y Números */

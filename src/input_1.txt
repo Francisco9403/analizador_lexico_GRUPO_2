@@ -1,5 +1,3 @@
-{* Comentario de prueba 
-   del Grupo 2 *}
 PROGRAM
     integer: a, b
     float: resultado

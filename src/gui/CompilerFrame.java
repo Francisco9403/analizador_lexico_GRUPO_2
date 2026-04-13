@@ -1,3 +1,7 @@
+package gui;
+
+import service.CompilerService;
+
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -16,7 +20,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingConstants;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.filechooser.FileNameExtensionFilter;
+import javax.swing.text.BadLocationException;
 
 
 public class CompilerFrame extends JFrame {
@@ -24,6 +31,7 @@ public class CompilerFrame extends JFrame {
     private final JTextArea sourceArea;
     private final JTextArea outputArea;
     private final CompilerService compilerService;
+    private final JLabel cursorStatusLabel;
 
     public CompilerFrame() {
         super("Compilador - Analizador Lexico/Sintactico");
@@ -31,6 +39,7 @@ public class CompilerFrame extends JFrame {
         this.compilerService = new CompilerService();
         this.sourceArea = new JTextArea();
         this.outputArea = new JTextArea();
+        this.cursorStatusLabel = new JLabel("Linea: 1, Columna: 1");
 
         configureUi();
         setDefaultExample();
@@ -50,6 +59,24 @@ public class CompilerFrame extends JFrame {
         outputArea.setFont(new Font(Font.MONOSPACED, Font.PLAIN, 13));
         outputArea.setEditable(false);
 
+        sourceArea.addCaretListener(e -> updateCursorStatus());
+        sourceArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateCursorStatus();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateCursorStatus();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateCursorStatus();
+            }
+        });
+
         JScrollPane sourceScroll = new JScrollPane(sourceArea);
         sourceScroll.setBorder(javax.swing.BorderFactory.createTitledBorder("Codigo fuente"));
 
@@ -62,7 +89,10 @@ public class CompilerFrame extends JFrame {
 
         JPanel actions = getJPanel();
 
-        add(actions, BorderLayout.SOUTH);
+        JPanel footer = new JPanel(new BorderLayout());
+        footer.add(actions, BorderLayout.WEST);
+        footer.add(cursorStatusLabel, BorderLayout.EAST);
+        add(footer, BorderLayout.SOUTH);
     }
 
     private JPanel getJPanel() {
@@ -96,6 +126,19 @@ public class CompilerFrame extends JFrame {
                 PRINT("El resultado es:", resultado)
                 FIN
                 """);
+        sourceArea.setCaretPosition(0);
+        updateCursorStatus();
+    }
+
+    private void updateCursorStatus() {
+        try {
+            int caretPosition = sourceArea.getCaretPosition();
+            int line = sourceArea.getLineOfOffset(caretPosition);
+            int column = caretPosition - sourceArea.getLineStartOffset(line);
+            cursorStatusLabel.setText("Linea: " + (line + 1) + ", Columna: " + (column + 1));
+        } catch (BadLocationException ex) {
+            cursorStatusLabel.setText("Linea: -, Columna: -");
+        }
     }
 
     private void compileCurrentSource() {

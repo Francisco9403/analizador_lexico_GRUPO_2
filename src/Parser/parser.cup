@@ -1,0 +1,78 @@
+package Parser;
+import java_cup.runtime.*;
+
+class Parser;
+
+parser code {:
+    public void syntax_error(Symbol s){
+        System.out.println("Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '"
+        + s.value + "' . Simbolo n° " + s.sym + " no reconocido." );
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        System.out.println("Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '"
+        + s.value + "' . Simbolo n° " + s.sym + " no reconocido." );
+    }
+:};
+
+terminal String PROGRAM, IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
+terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, SUMA_ACUM, FIN;
+terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
+terminal String OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
+terminal String COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
+terminal String ASIG, AND, OR, NOT;
+terminal String PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
+
+nonterminal String program;
+nonterminal Object body, token_item;
+
+start with program;
+
+program ::= PROGRAM body FIN {: RESULT = "Programa valido"; :};
+
+body ::= {: RESULT = null; :}
+       | body token_item {: RESULT = null; :};
+
+token_item ::= IF
+             | ELIF
+             | ELSE
+             | WHILE
+             | ALT_WHILE
+             | BREAK
+             | CONTINUE
+             | PRINT
+             | TYPE_INT
+             | TYPE_FLOAT
+             | TYPE_BOOL
+             | TYPE_ARRAY
+             | READ_INT
+             | READ_FLOAT
+             | READ_BOOL
+             | CONST_BOOL
+             | SUMA_ACUM
+             | ID
+             | CTE_INT
+             | CTE_FLOAT
+             | CTE_STR
+             | OP_SUMA
+             | OP_RESTA
+             | OP_MULT
+             | OP_DIV
+             | COMP_IGUAL
+             | COMP_DISTINTO
+             | COMP_MAYOR_IGUAL
+             | COMP_MENOR_IGUAL
+             | COMP_MAYOR
+             | COMP_MENOR
+             | ASIG
+             | AND
+             | OR
+             | NOT
+             | PAR_A
+             | PAR_C
+             | CORCH_A
+             | CORCH_C
+             | COMA
+             | DOS_PUNTOS
+             ;
