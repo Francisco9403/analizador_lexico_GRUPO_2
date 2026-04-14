@@ -18,17 +18,21 @@ parser code {:
     }
 :};
 
-terminal String PROGRAM, IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
+terminal PROGRAM, IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
-terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, SUMA_ACUM, FIN;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, FIN;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
-terminal String OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
-terminal String COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
-terminal String ASIG, AND, OR, NOT;
-terminal String PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
+terminal boolean TRUE, FALSE;
+terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
+terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
+terminal ASIG, AND, OR, NOT;
+terminal PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
 
 /* Terminal fantasma para la precedencia del menos unario (ej: -5) */
 terminal UMENOS;
+
+/* Terminal de funcion especial */
+terminal SUMA_ACUM;
 
 /* --- DECLARACION DE NO TERMINALES --- */
 nonterminal String program;
@@ -41,6 +45,7 @@ nonterminal Object expresion, lista_expresiones, arreglo_literal;
 
 /* --- PRECEDENCIA Y ASOCIATIVIDAD (De menor a mayor prioridad) --- */
 /* Según la tabla del enunciado del TP */
+/* No son necesarios por como esta realizado: REVISAR con el profe
 precedence right OR;
 precedence right AND;
 precedence right NOT;
@@ -48,6 +53,7 @@ precedence nonassoc COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR, COMP_MAYOR_IGUAL, COM
 precedence left OP_SUMA, OP_RESTA;
 precedence left OP_MULT, OP_DIV;
 precedence left UMENOS;
+*/
 
 start with program;
 
@@ -66,6 +72,8 @@ bloque_declaraciones ::= bloque_declaraciones declaracion
 declaracion ::= tipo DOS_PUNTOS lista_ids ;
 
 tipo ::= TYPE_INT | TYPE_FLOAT | TYPE_BOOL | TYPE_ARRAY ;
+
+bool ::= TRUE | FALSE ;
 
 lista_ids ::= lista_ids COMA ID
             | ID ;
@@ -96,27 +104,11 @@ sentencia_while ::= WHILE PAR_A expresion PAR_C bloque_sentencias ;
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
-expresion ::= expresion OP_SUMA expresion
-            | expresion OP_RESTA expresion
-            | expresion OP_MULT expresion
-            | expresion OP_DIV expresion
-            | expresion COMP_IGUAL expresion
-            | expresion COMP_DISTINTO expresion
-            | expresion COMP_MAYOR expresion
-            | expresion COMP_MENOR expresion
-            | expresion COMP_MAYOR_IGUAL expresion
-            | expresion COMP_MENOR_IGUAL expresion
-            | expresion AND expresion
-            | expresion OR expresion
-            | NOT expresion
-            | OP_RESTA expresion %prec UMENOS
-            | PAR_A expresion PAR_C
+expresion ::= OP_RESTA expresion %prec UMENOS
+            | PAR_A expresionOr PAR_C
             | ID
-            | CTE_INT
-            | CTE_FLOAT
-            | CTE_STR
-            | CONST_BOOL
             | arreglo_literal
+            | valorLiteral
             /* FUNCIONES DE LECTURA */
             | READ_INT PAR_A PAR_C
             | READ_FLOAT PAR_A PAR_C
@@ -124,6 +116,48 @@ expresion ::= expresion OP_SUMA expresion
             /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
             | SUMA_ACUM PAR_A expresion COMA arreglo_literal PAR_C
             ;
+
+expresionSumRes::=expresionSumRes OP_SUMA expresionMultDiv
+                | expresionSumRes OP_RESTA expresionMultDiv
+                | expresionMultDiv
+                ;
+
+expresionMultDiv::=expresionMultDiv OP_MULT expresion
+                 | expresionMultDiv OP_DIV expresion
+                 | expresion
+                 ;
+
+expresionNot ::= NOT expresionNot
+               | comparacion
+               | expresionSumRes
+               | bool
+               ;
+
+comparacion ::= expresionSumRes simboloComp expresionSumRes
+              ;
+
+simboloComp ::= expresion COMP_IGUAL expresion
+              | expresion COMP_DISTINTO expresion
+              | expresion COMP_MAYOR expresion
+              | expresion COMP_MENOR expresion
+              | expresion COMP_MAYOR_IGUAL expresion
+              | expresion COMP_MENOR_IGUAL expresion
+              ;
+
+expresionOr::= expresionOr OR expresionAnd
+              | expresionAnd
+              ;
+
+expresionAnd::= expresionAnd AND expresionNot
+              | expresionNot
+              ;
+
+valorLiteral ::= CTE_INT
+              | CTE_FLOAT
+              | CTE_STR
+              | CONST_BOOL
+              ;
+
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
