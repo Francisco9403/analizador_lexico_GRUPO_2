@@ -101,9 +101,9 @@ impresion ::= PRINT PAR_A expresionOr PAR_C
 
 /* NOTA: Como aún no implementamos la indentación en el Lexer,
    estas sentencias van a agrupar to do lo que tengan debajo. */
-sentencia_if ::= IF PAR_A expresion PAR_C bloque_sentencias ;
+sentencia_if ::= IF PAR_A expresionOr PAR_C bloque_sentencias ;
 
-sentencia_while ::= WHILE PAR_A expresion PAR_C bloque_sentencias ;
+sentencia_while ::= WHILE PAR_A expresionOr PAR_C bloque_sentencias ;
 
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
