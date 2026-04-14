@@ -28,6 +28,7 @@ terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAY
 terminal ASIG, AND, OR, NOT;
 terminal PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
 
+
 /* Terminal fantasma para la precedencia del menos unario (ej: -5) */
 terminal UMENOS;
 
@@ -42,6 +43,9 @@ nonterminal Object bloque_sentencias, sentencia;
 nonterminal Object asignacion, impresion, lectura;
 nonterminal Object sentencia_if, sentencia_while;
 nonterminal Object expresion, lista_expresiones, arreglo_literal;
+
+nonterminal expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
+nonterminal simboloComp, comparacion, bool, valorLiteral;
 
 /* --- PRECEDENCIA Y ASOCIATIVIDAD (De menor a mayor prioridad) --- */
 /* Según la tabla del enunciado del TP */
@@ -73,8 +77,6 @@ declaracion ::= tipo DOS_PUNTOS lista_ids ;
 
 tipo ::= TYPE_INT | TYPE_FLOAT | TYPE_BOOL | TYPE_ARRAY ;
 
-bool ::= TRUE | FALSE ;
-
 lista_ids ::= lista_ids COMA ID
             | ID ;
 
@@ -93,7 +95,9 @@ sentencia ::= asignacion
 
 asignacion ::= ID ASIG expresion ;
 
-impresion ::= PRINT PAR_A lista_expresiones PAR_C ;
+impresion ::= PRINT PAR_A expresionOr PAR_C
+              | PRINT PAR_A CTE_STR PAR_C
+              ;
 
 /* NOTA: Como aún no implementamos la indentación en el Lexer,
    estas sentencias van a agrupar to do lo que tengan debajo. */
@@ -104,66 +108,68 @@ sentencia_while ::= WHILE PAR_A expresion PAR_C bloque_sentencias ;
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
-expresion ::= OP_RESTA expresion %prec UMENOS
-            | PAR_A expresionOr PAR_C
-            | ID
-            | arreglo_literal
-            | valorLiteral
-            /* FUNCIONES DE LECTURA */
-            | READ_INT PAR_A PAR_C
-            | READ_FLOAT PAR_A PAR_C
-            | READ_BOOL PAR_A PAR_C
-            /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
-            | SUMA_ACUM PAR_A expresion COMA arreglo_literal PAR_C
-            ;
+
+expresionOr::= expresionAnd OR expresionOr
+              | expresionAnd
+              ;
+
+expresionAnd::= expresionNot AND expresionAnd
+              | expresionNot
+              ;
+
+expresionNot ::= NOT expresionNot
+               | comparacion
+               ;
+
+
+comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes
+              | expresionSumRes COMP_DISTINTO expresionSumRes
+              | expresionSumRes COMP_MAYOR expresionSumRes
+              | expresionSumRes COMP_MENOR expresionSumRes
+              | expresionSumRes COMP_MAYOR_IGUAL expresionSumRes
+              | expresionSumRes COMP_MENOR_IGUAL expresionSumRes
+              | expresionSumRes
+              ;
 
 expresionSumRes::=expresionSumRes OP_SUMA expresionMultDiv
                 | expresionSumRes OP_RESTA expresionMultDiv
                 | expresionMultDiv
                 ;
 
-expresionMultDiv::=expresionMultDiv OP_MULT expresion
-                 | expresionMultDiv OP_DIV expresion
-                 | expresion
+expresionMultDiv::=expresionMultDiv OP_MULT expresionMenosU
+                 | expresionMultDiv OP_DIV expresionMenosU
+                 | expresionMenosU
                  ;
 
-expresionNot ::= NOT expresionNot
-               | comparacion
-               | expresionSumRes
-               | bool
-               ;
+expresionMenosU::= OP_RESTA expresion %prec UMENOS
+                | expresion
+                ;
 
-comparacion ::= expresionSumRes simboloComp expresionSumRes
-              ;
-
-simboloComp ::= expresion COMP_IGUAL expresion
-              | expresion COMP_DISTINTO expresion
-              | expresion COMP_MAYOR expresion
-              | expresion COMP_MENOR expresion
-              | expresion COMP_MAYOR_IGUAL expresion
-              | expresion COMP_MENOR_IGUAL expresion
-              ;
-
-expresionOr::= expresionOr OR expresionAnd
-              | expresionAnd
-              ;
-
-expresionAnd::= expresionAnd AND expresionNot
-              | expresionNot
-              ;
+expresion ::= PAR_A expresionOr PAR_C
+            | ID
+            | valorLiteral
+            /* FUNCIONES DE LECTURA */
+            | READ_INT PAR_A PAR_C
+            | READ_FLOAT PAR_A PAR_C
+            | READ_BOOL PAR_A PAR_C
+            /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
+            | sum_acum
+            ;
 
 valorLiteral ::= CTE_INT
               | CTE_FLOAT
-              | CTE_STR
               | CONST_BOOL
+              /* | CTE_ARREGLO */
               ;
 
+sum_acum::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C;
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
    -------------------------------------------------------- */
-arreglo_literal ::= CORCH_A lista_expresiones CORCH_C
-                  | CORCH_A CORCH_C ; /* Arreglo vacio */
 
-lista_expresiones ::= lista_expresiones COMA expresion
-                    | expresion ;
+/*CORCH_A lista_expresiones CORCH_C
+                  | CORCH_A CORCH_C ;  Arreglo vacio */
+
+lista_expresiones ::= lista_expresiones COMA expresionOr
+                    | expresionOr ;
