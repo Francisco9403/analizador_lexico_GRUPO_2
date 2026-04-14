@@ -20,7 +20,7 @@ parser code {:
 
 terminal PROGRAM, IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
-terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, FIN;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO, FIN;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
 terminal boolean TRUE, FALSE;
 terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
@@ -149,6 +149,7 @@ expresion ::= PAR_A expresionOr PAR_C
             | ID
             | valorLiteral
             /* FUNCIONES DE LECTURA */
+            | ID CORCH_A expresionOr CORCH_C
             | READ_INT PAR_A PAR_C
             | READ_FLOAT PAR_A PAR_C
             | READ_BOOL PAR_A PAR_C
@@ -159,7 +160,7 @@ expresion ::= PAR_A expresionOr PAR_C
 valorLiteral ::= CTE_INT
               | CTE_FLOAT
               | CONST_BOOL
-              /* | CTE_ARREGLO */
+              | CTE_ARREGLO
               ;
 
 sum_acum::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C;
