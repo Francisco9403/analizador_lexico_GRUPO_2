@@ -1,4 +1,5 @@
 package Lexer;
+import TablaSimbolo.TablaSimbolo;
 
 /**
  * Analizador Léxico para el TPI - Grupo 2
@@ -13,6 +14,9 @@ package Lexer;
 %column
 
 %{
+
+    public static TablaSimbolo tablaSimbolos = new TablaSimbolo();
+
     /* Variables para strings y comentarios */
     StringBuffer string = new StringBuffer();
     int string_yyline = 0;
@@ -50,11 +54,14 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 <YYINITIAL> {
   /* Palabras Reservadas */
   "PROGRAM"            { return token("PROGRAM", yytext()); }
+  "DECLARE"            { return token("DECLARE", yytext()); }
   "IF"                 { return token("IF", yytext()); }
   "ELIF"               { return token("ELIF", yytext()); }
   "ELSE"               { return token("ELSE", yytext()); }
   "WHILE"              { return token("WHILE", yytext()); }
   "ALT_WHILE"          { return token("ALT_WHILE", yytext()); }
+  "INDENT"             { return token("INDENT", yytext()); }
+  "DEDENT"             { return token("DEDENT", yytext()); }
   "BREAK"              { return token("BREAK", yytext()); }
   "CONTINUE"           { return token("CONTINUE", yytext()); }
   "PRINT"              { return token("PRINT", yytext()); }
@@ -77,8 +84,8 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   /* TEMA ESPECIAL: Grupo 2 */
   "suma_cumulativa"    { return token("SUMA_ACUM", yytext()); }
 
-  /* Lexer.Token de corte (del ejemplo del profe) */
-  "FIN"                { return token("FIN", yytext()); }
+  "FIN_PROGRAM"        { return token("FIN_PROGRAM", yytext()); }
+  "FIN_DECLARE"        { return token("FIN_DECLARE", yytext()); }
 
   /* Identificadores y Números */
   {Identifier}         { return token("ID", yytext()); }

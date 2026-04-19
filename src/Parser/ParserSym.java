@@ -8,30 +8,29 @@ package Parser;
 /** CUP generated class containing symbol constants. */
 public class ParserSym {
   /* terminals */
-  public static final int CTE_ARREGLO = 19;
+  public static final int FIN_DECLARE = 12;
+  public static final int CTE_ARREGLO = 22;
   public static final int COMP_MENOR_IGUAL = 34;
-  public static final int TYPE_ARRAY = 14;
-  public static final int SUMA_ACUM = 48;
-  public static final int CTE_FLOAT = 23;
+  public static final int TYPE_ARRAY = 17;
+  public static final int SUMA_ACUM = 49;
+  public static final int CTE_FLOAT = 25;
   public static final int COMP_IGUAL = 31;
   public static final int DOS_PUNTOS = 46;
   public static final int CONTINUE = 9;
-  public static final int FIN = 20;
   public static final int OP_DIV = 30;
   public static final int COMP_DISTINTO = 32;
   public static final int NOT = 40;
   public static final int AND = 38;
   public static final int OR = 39;
   public static final int COMP_MENOR = 36;
-  public static final int TYPE_INT = 11;
-  public static final int UMENOS = 47;
+  public static final int TYPE_INT = 14;
+  public static final int UMENOS = 50;
   public static final int IF = 3;
-  public static final int ID = 21;
+  public static final int ID = 23;
   public static final int COMP_MAYOR = 35;
   public static final int EOF = 0;
   public static final int ASIG = 37;
-  public static final int READ_FLOAT = 16;
-  public static final int TRUE = 25;
+  public static final int READ_FLOAT = 19;
   public static final int error = 1;
   public static final int PROGRAM = 2;
   public static final int COMA = 45;
@@ -40,20 +39,23 @@ public class ParserSym {
   public static final int OP_RESTA = 28;
   public static final int PAR_A = 41;
   public static final int BREAK = 8;
-  public static final int CONST_BOOL = 18;
-  public static final int TYPE_FLOAT = 12;
+  public static final int CONST_BOOL = 21;
+  public static final int TYPE_FLOAT = 15;
   public static final int ALT_WHILE = 7;
-  public static final int READ_INT = 15;
+  public static final int DECLARE = 11;
+  public static final int READ_INT = 18;
   public static final int ELSE = 5;
-  public static final int CTE_STR = 24;
+  public static final int CTE_STR = 26;
   public static final int WHILE = 6;
-  public static final int CTE_INT = 22;
+  public static final int DEDENT = 48;
+  public static final int CTE_INT = 24;
   public static final int OP_SUMA = 27;
   public static final int COMP_MAYOR_IGUAL = 33;
-  public static final int FALSE = 26;
-  public static final int TYPE_BOOL = 13;
+  public static final int INDENT = 47;
+  public static final int TYPE_BOOL = 16;
+  public static final int FIN_PROGRAM = 13;
   public static final int CORCH_C = 44;
-  public static final int READ_BOOL = 17;
+  public static final int READ_BOOL = 20;
   public static final int CORCH_A = 43;
   public static final int ELIF = 4;
   public static final int PRINT = 10;
@@ -69,6 +71,9 @@ public class ParserSym {
   "BREAK",
   "CONTINUE",
   "PRINT",
+  "DECLARE",
+  "FIN_DECLARE",
+  "FIN_PROGRAM",
   "TYPE_INT",
   "TYPE_FLOAT",
   "TYPE_BOOL",
@@ -78,13 +83,10 @@ public class ParserSym {
   "READ_BOOL",
   "CONST_BOOL",
   "CTE_ARREGLO",
-  "FIN",
   "ID",
   "CTE_INT",
   "CTE_FLOAT",
   "CTE_STR",
-  "TRUE",
-  "FALSE",
   "OP_SUMA",
   "OP_RESTA",
   "OP_MULT",
@@ -105,8 +107,10 @@ public class ParserSym {
   "CORCH_C",
   "COMA",
   "DOS_PUNTOS",
-  "UMENOS",
-  "SUMA_ACUM"
+  "INDENT",
+  "DEDENT",
+  "SUMA_ACUM",
+  "UMENOS"
   };
 }
 

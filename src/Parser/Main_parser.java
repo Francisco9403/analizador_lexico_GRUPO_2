@@ -32,10 +32,10 @@ public class Main_parser {
         Parser parser = new Parser(new CupScannerAdapter(tokens));
         try{
             parser.parse();
-            System.out.println("Análisis sintáctico finalizado.");}
+            System.out.println("Análisis sintáctico finalizado.");
+        }
         catch (Exception e){
             System.out.println(e.getMessage());
         }
-
     }
 }

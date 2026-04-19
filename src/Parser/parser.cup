@@ -1,9 +1,15 @@
 package Parser;
+import java.util.*;
 import java_cup.runtime.*;
 import Exception.SyntaxException;
+import java.util.ArrayList;
+import Lexer.Lexer;
+import TablaSimbolo.TablaSimbolo;
 class Parser;
 
 parser code {:
+    TablaSimbolo tablaSimbolos = new TablaSimbolo();
+
     public void syntax_error(Symbol s){
         // Esto solo imprime un aviso temporal en consola
         System.out.println("Aviso: Error sintáctico cerca de la línea " + (s.left + 1));
@@ -18,143 +24,194 @@ parser code {:
     }
 :};
 
-terminal PROGRAM, IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
+terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
+terminal PROGRAM, DECLARE, FIN_DECLARE, FIN_PROGRAM;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
-terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO, FIN;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
-terminal boolean TRUE, FALSE;
 terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
 terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
 terminal ASIG, AND, OR, NOT;
 terminal PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
-
-
-/* Terminal fantasma para la precedencia del menos unario (ej: -5) */
+terminal INDENT, DEDENT, SUMA_ACUM;
 terminal UMENOS;
 
-/* Terminal de funcion especial */
-terminal SUMA_ACUM;
 
 /* --- DECLARACION DE NO TERMINALES --- */
 nonterminal String program;
-nonterminal Object bloque_declaraciones, declaracion;
-nonterminal Object tipo, lista_ids;
-nonterminal Object bloque_sentencias, sentencia;
-nonterminal Object asignacion, impresion, lectura;
-nonterminal Object sentencia_if, sentencia_while;
-nonterminal Object expresion, lista_expresiones, arreglo_literal;
+nonterminal String tipo;
+nonterminal String seccion_declaracion, bloque_declaraciones, declaracion;
+nonterminal String lista_ids;
+nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
+nonterminal String asignacion, impresion;
+nonterminal String sentencia_if, sentencia_while;
+nonterminal String expresion, lista_expresiones;
 
-nonterminal expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
-nonterminal simboloComp, comparacion, bool, valorLiteral;
-
-/* --- PRECEDENCIA Y ASOCIATIVIDAD (De menor a mayor prioridad) --- */
-/* Según la tabla del enunciado del TP */
-/* No son necesarios por como esta realizado: REVISAR con el profe
-precedence right OR;
-precedence right AND;
-precedence right NOT;
-precedence nonassoc COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR, COMP_MAYOR_IGUAL, COMP_MENOR, COMP_MENOR_IGUAL;
-precedence left OP_SUMA, OP_RESTA;
-precedence left OP_MULT, OP_DIV;
-precedence left UMENOS;
-*/
+nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
+nonterminal String comparacion, valorLiteral;
+nonterminal String sentencia_control, bloque, lista_sentencias;
+nonterminal String alt_while_part, else_part, elif_part;
 
 start with program;
 
 /* --------------------------------------------------------
    1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
    -------------------------------------------------------- */
-program ::= PROGRAM bloque_declaraciones bloque_sentencias FIN
-            {: RESULT = "Programa valido. Estructura y matematicas correctas!"; :};
+program ::= seccion_declaracion:bd seccion_sentencias:bs
+            {:
+            RESULT = bd + "\n" + bs; :}
+            | seccion_sentencias:bs
+            {:
+             RESULT= bs; :}
+            ;
 
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-bloque_declaraciones ::= bloque_declaraciones declaracion
-                       | /* vacio (puede no haber declaraciones) */ ;
+seccion_declaracion ::= DECLARE bloque_declaraciones:bd FIN_DECLARE{:
+                    RESULT = bd; :}
+                  | DECLARE FIN_DECLARE
+                  ;
 
-declaracion ::= tipo DOS_PUNTOS lista_ids ;
+bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
+                        RESULT = bd + "\n" + d;
+                      :}| declaracion:d {:
+                        RESULT = d;
+                       :} ;
+
+declaracion ::= tipo:t DOS_PUNTOS lista_ids:l{:
+            RESULT = t + "\n" + l;
+            :};
 
 tipo ::= TYPE_INT | TYPE_FLOAT | TYPE_BOOL | TYPE_ARRAY ;
 
-lista_ids ::= lista_ids COMA ID
-            | ID ;
+lista_ids ::= lista_ids:l COMA ID:id{:
+            RESULT = l + "\n" + id ; :}
+           | ID:id {: RESULT = id;:}
+                ;
 
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)
    -------------------------------------------------------- */
-bloque_sentencias ::= bloque_sentencias sentencia
-                    | sentencia ;
+seccion_sentencias ::= PROGRAM bloque_sentencias:bs FIN_PROGRAM{:
+                    RESULT = bs;
+                    :}| PROGRAM FIN_PROGRAM;
 
-sentencia ::= asignacion
-            | impresion
-            | sentencia_if
-            | sentencia_while
-            | BREAK
-            | CONTINUE ;
+bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
+                   RESULT = bs + "\n" + s;
+                   :}| sentencia:s {:
+                   RESULT = s;
+                    :};
 
-asignacion ::= ID ASIG expresion ;
+sentencia ::= asignacion:a{:
+            RESULT= a;
+          :}| impresion:i {:
+            RESULT= i;
+          :}| sentencia_if:si {:
+            RESULT= si;
+          :}| sentencia_while:sw{:
+            RESULT= sw;
+          :}| sentencia_control:sc{:
+            RESULT= sc;
+          :};
 
-impresion ::= PRINT PAR_A expresionOr PAR_C
-              | PRINT PAR_A CTE_STR PAR_C
+asignacion ::= ID ASIG expresionOr:e{:
+              RESULT= e;
+            :};
+
+impresion ::= PRINT PAR_A expresionOr:e PAR_C{:
+             RESULT = e;
+           :}| PRINT PAR_A CTE_STR PAR_C
               ;
 
-/* NOTA: Como aún no implementamos la indentación en el Lexer,
-   estas sentencias van a agrupar to do lo que tengan debajo. */
-sentencia_if ::= IF PAR_A expresionOr PAR_C bloque_sentencias ;
+bloque ::= INDENT lista_sentencias:ls DEDENT{:
+                  RESULT = ls;
+                  :};
 
-sentencia_while ::= WHILE PAR_A expresionOr PAR_C bloque_sentencias ;
+lista_sentencias ::= lista_sentencias:ls sentencia:s{: RESULT= ls + "\n" + s;:}
+                  | sentencia:s {:RESULT = s;:}
+                  ;
 
+sentencia_control ::= BREAK
+                    | CONTINUE
+                    ;
+
+sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {: RESULT= c + "\n" + b + "\n" + el + "\n" + es ;:}
+               | IF expresionOr:c bloque:b else_part:es {: RESULT= c + "\n" + b + "\n" + es ;:}
+               | IF expresionOr:c bloque:b elif_part:el {: RESULT= c + "\n" + b + "\n" + el ;:}
+               ;
+
+/* Regla recursiva para manejar N cantidad de ELIF */
+elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {: RESULT= el + "\n" + c + "\n" + b;:}
+            |
+            ;
+
+/* El ELSE es opcional */
+else_part ::= ELSE bloque:b {: RESULT= b;:}
+            ;
+
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
+
+/* Puede haber múltiples bloques ALT_WHILE */
+alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
+                 | /* vacio */
+                 ;
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
 
-expresionOr::= expresionAnd OR expresionOr
-              | expresionAnd
+expresionOr::= expresionAnd:ea OR expresionOr:eo {:
+              RESULT = ea + "\n" + eo;
+            :}| expresionAnd:ea{:
+              RESULT = ea;
+            :};
+
+expresionAnd::= expresionNot:en AND expresionAnd:ea{:
+              RESULT = en + "\n" + ea;
+            :}| expresionNot:en{:
+              RESULT = en;
+            :};
+
+expresionNot ::= NOT expresionNot:en{:
+               RESULT = en ;
+             :}| comparacion:c{:
+               RESULT= c;
+             :};
+
+
+comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
+              | expresionSumRes:es {: RESULT = es;:}
               ;
 
-expresionAnd::= expresionNot AND expresionAnd
-              | expresionNot
-              ;
-
-expresionNot ::= NOT expresionNot
-               | comparacion
-               ;
-
-
-comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes
-              | expresionSumRes COMP_DISTINTO expresionSumRes
-              | expresionSumRes COMP_MAYOR expresionSumRes
-              | expresionSumRes COMP_MENOR expresionSumRes
-              | expresionSumRes COMP_MAYOR_IGUAL expresionSumRes
-              | expresionSumRes COMP_MENOR_IGUAL expresionSumRes
-              | expresionSumRes
-              ;
-
-expresionSumRes::=expresionSumRes OP_SUMA expresionMultDiv
-                | expresionSumRes OP_RESTA expresionMultDiv
-                | expresionMultDiv
+expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {: RESULT = es + "\n" + em;:}
+                | expresionSumRes:es OP_RESTA expresionMultDiv:em {: RESULT = es + "\n" + em;:}
+                | expresionMultDiv:em {: RESULT = em;:}
                 ;
 
-expresionMultDiv::=expresionMultDiv OP_MULT expresionMenosU
-                 | expresionMultDiv OP_DIV expresionMenosU
-                 | expresionMenosU
+expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {: RESULT = em + "\n" + emu;:}
+                 | expresionMultDiv:em OP_DIV expresionMenosU:emu {: RESULT = em + "\n" + emu;:}
+                 | expresionMenosU:emu {: RESULT = emu;:}
                  ;
 
-expresionMenosU::= OP_RESTA expresion %prec UMENOS
-                | expresion
+expresionMenosU::= OP_RESTA expresion:e {: RESULT = e;:} %prec UMENOS
+                | expresion:e {: RESULT = e;:}
                 ;
 
-expresion ::= PAR_A expresionOr PAR_C
+expresion ::= PAR_A expresionOr:e PAR_C {: RESULT = e;:}
             | ID
-            | valorLiteral
+            | valorLiteral:vl {: RESULT = vl;:}
             /* FUNCIONES DE LECTURA */
-            | ID CORCH_A expresionOr CORCH_C
+            | ID CORCH_A expresionOr:e CORCH_C {: RESULT = e;:}
             | READ_INT PAR_A PAR_C
             | READ_FLOAT PAR_A PAR_C
             | READ_BOOL PAR_A PAR_C
             /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
-            | sum_acum
+            | sum_acum:sm {: RESULT = sm;:}
             ;
 
 valorLiteral ::= CTE_INT
@@ -163,7 +220,9 @@ valorLiteral ::= CTE_INT
               | CTE_ARREGLO
               ;
 
-sum_acum::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C;
+sum_acum::= SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C{:
+            RESULT = e + "\n" + le;
+            :};
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
@@ -172,5 +231,8 @@ sum_acum::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C;
 /*CORCH_A lista_expresiones CORCH_C
                   | CORCH_A CORCH_C ;  Arreglo vacio */
 
-lista_expresiones ::= lista_expresiones COMA expresionOr
-                    | expresionOr ;
+lista_expresiones ::= lista_expresiones:li COMA expresionOr:e{:
+                    RESULT = li + "\n" + e;
+                    :}| expresionOr:e{:
+                    RESULT = e;
+                    :};
