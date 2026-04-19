@@ -136,13 +136,13 @@ sentencia_control ::= BREAK
                     | CONTINUE
                     ;
 
-sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {: RESULT= c + "\n" + b + "\n" + el + "\n" + es ;:}
-               | IF expresionOr:c bloque:b else_part:es {: RESULT= c + "\n" + b + "\n" + es ;:}
-               | IF expresionOr:c bloque:b elif_part:el {: RESULT= c + "\n" + b + "\n" + el ;:}
+sentencia_if ::= IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el else_part:es {: RESULT= c + "\n" + b + "\n" + el + "\n" + es ;:}
+               | IF PAR_A expresionOr:c PAR_C bloque:b else_part:es {: RESULT= c + "\n" + b + "\n" + es ;:}
+               | IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el {: RESULT= c + "\n" + b + "\n" + el ;:}
                ;
 
 /* Regla recursiva para manejar N cantidad de ELIF */
-elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {: RESULT= el + "\n" + c + "\n" + b;:}
+elif_part ::= elif_part:el ELIF PAR_A expresionOr:c PAR_C bloque:b {: RESULT= el + "\n" + c + "\n" + b;:}
             |
             ;
 
@@ -150,10 +150,10 @@ elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {: RESULT= el + "\n" + c 
 else_part ::= ELSE bloque:b {: RESULT= b;:}
             ;
 
-sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
+sentencia_while ::= WHILE PAR_A expresionOr:c PAR_C bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
 
 /* Puede haber múltiples bloques ALT_WHILE */
-alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
+alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
                  | /* vacio */
                  ;
 /* --------------------------------------------------------
