@@ -8,7 +8,7 @@ import TablaSimbolo.TablaSimbolo;
 class Parser;
 
 parser code {:
-    TablaSimbolo tablaSimbolos = new TablaSimbolo();
+    TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
 
     public void syntax_error(Symbol s){
         // Esto solo imprime un aviso temporal en consola
@@ -41,7 +41,7 @@ terminal UMENOS;
 nonterminal String program;
 nonterminal String tipo;
 nonterminal String seccion_declaracion, bloque_declaraciones, declaracion;
-nonterminal String lista_ids;
+nonterminal ArrayList<String> lista_ids;
 nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
 nonterminal String asignacion, impresion;
 nonterminal String sentencia_if, sentencia_while;
@@ -79,16 +79,29 @@ bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
                         RESULT = d;
                        :} ;
 
-declaracion ::= tipo:t DOS_PUNTOS lista_ids:l{:
-            RESULT = t + "\n" + l;
-            :};
+declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
+            // Recorremos la lista y seteamos el tipo en la tabla
+            for (String id : l) {
+                tablaSimbolos.setType(id, t);
+            }
+            RESULT = t + " : " + l.toString();
+        :};
 
-tipo ::= TYPE_INT | TYPE_FLOAT | TYPE_BOOL | TYPE_ARRAY ;
+lista_ids ::= lista_ids:l COMA ID:id {:
+            l.add(id);
+            RESULT = l;
+        :}
+        | ID:id {:
+            ArrayList<String> lista = new ArrayList<>();
+            lista.add(id);
+            RESULT = lista;
+        :};
 
-lista_ids ::= lista_ids:l COMA ID:id{:
-            RESULT = l + "\n" + id ; :}
-           | ID:id {: RESULT = id;:}
-                ;
+tipo ::= TYPE_INT    {: RESULT = "INT"; :}
+       | TYPE_FLOAT  {: RESULT = "FLOAT"; :}
+       | TYPE_BOOL   {: RESULT = "BOOL"; :}
+       | TYPE_ARRAY  {: RESULT = "FLOAT_ARRAY"; :}
+       ;
 
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)

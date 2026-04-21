@@ -32,6 +32,8 @@ public class CompilerService {
                 out.append("Resultado: ").append(result.value).append('\n');
             }
             out.append("\nCompilacion finalizada sin errores.\n");
+            Lexer.tablaSimbolos.generateFile();
+            out.append("\nTabla de símbolos generada en ts.txt\n");
         } catch (SyntaxException e) {
             out.append("\n[ERROR SINTACTICO] ").append(e.getMessage()).append('\n');
         } catch (Exception e) {

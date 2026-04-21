@@ -87,10 +87,27 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "FIN_PROGRAM"        { return token("FIN_PROGRAM", yytext()); }
   "FIN_DECLARE"        { return token("FIN_DECLARE", yytext()); }
 
-  /* Identificadores y Números */
+  /* Identificadores y Números
   {Identifier}         { return token("ID", yytext()); }
   {DecIntegerLiteral}  { return token("CTE_INT", yytext()); }
-  {FloatLiteral}       { return token("CTE_FLOAT", yytext()); }
+  {FloatLiteral}       { return token("CTE_FLOAT", yytext()); }*/
+
+{Identifier} {
+    // Agregamos el ID a la tabla. Por ahora sin tipo (se lo dará el Parser)
+    tablaSimbolos.addId(yytext(), "ID");
+    return token("ID", yytext());
+}
+
+{DecIntegerLiteral} {
+    // Las constantes se agregan con su valor y longitud
+    tablaSimbolos.addConstant("_" + yytext(), "CTE_INT", yytext(), String.valueOf(yytext().length()));
+    return token("CTE_INT", yytext());
+}
+
+{FloatLiteral} {
+    tablaSimbolos.addConstant("_" + yytext(), "CTE_FLOAT", yytext(), String.valueOf(yytext().length()));
+    return token("CTE_FLOAT", yytext());
+}
 
   /* Operadores Aritméticos */
   "+"                  { return token("OP_SUMA", yytext()); }
@@ -142,8 +159,11 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 }
 
 <CADENA> {
-  \"                   { yybegin(YYINITIAL);
-                         return token("CTE_STR", string.toString());
+  \"                   {
+                           yybegin(YYINITIAL);
+                           String cadena = string.toString();
+                           tablaSimbolos.addConstant("_" + cadena, "CTE_STR", cadena, String.valueOf(cadena.length()));
+                           return token("CTE_STR", cadena);
                        }
   "\\\""               { string.append("\""); }
   "\\n"                { string.append("\n"); }

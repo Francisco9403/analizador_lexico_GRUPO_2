@@ -2,7 +2,7 @@ import gui.CompilerFrame;
 
 import javax.swing.SwingUtilities;
 
-//MAINN ENTRY POINT
+//MAIN ENTRY POINT
 public class Main_gui {
 
     public static void main(String[] args) {
