@@ -121,6 +121,8 @@ asignacion ::= ID ASIG expresionOr:e{:
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C{:
              RESULT = e;
+           :}| PRINT PAR_A CTE_STR COMA expresionOr:e PAR_C{:
+             RESULT = e;
            :}| PRINT PAR_A CTE_STR PAR_C
               ;
 
@@ -220,7 +222,13 @@ valorLiteral ::= CTE_INT
               | CTE_ARREGLO
               ;
 
-sum_acum::= SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C{:
+sum_acum::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C{:
+            RESULT = e + "\n" + le;
+            :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C{:
+            RESULT = e;
+            :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C{:
             RESULT = e + "\n" + le;
             :};
 

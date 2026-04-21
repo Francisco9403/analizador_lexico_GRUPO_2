@@ -1,11 +1,11 @@
-PROGRAM
+    DECLARE
     integer: a, b
     float: resultado
-    
+    FIN_DECLARE
+    PROGRAM
     a = 10
-    b = 20 % comentario de linea
-    
+    b = 20
     IF (a < b)
         resultado = suma_cumulativa(a, [1.5, 2.0, b])
         PRINT("El resultado es: ", resultado)
-    FIN
+    FIN_PROGRAM

@@ -28,6 +28,8 @@ import javax.swing.text.BadLocationException;
 
 public class CompilerFrame extends JFrame {
 
+    private static final Path DEFAULT_INPUT_PATH = Path.of("src", "input_1.txt");
+
     private final JTextArea sourceArea;
     private final JTextArea outputArea;
     private final CompilerService compilerService;
@@ -115,17 +117,11 @@ public class CompilerFrame extends JFrame {
     }
 
     private void setDefaultExample() {
-        sourceArea.setText("""
-                PROGRAM
-                integer: a, b
-                float: resultado
-                a = 10
-                b = 20
-                IF (a < b)
-                resultado = suma_cumulativa(a, [1.5, 2.0, b])
-                PRINT("El resultado es:", resultado)
-                FIN
-                """);
+        try {
+            sourceArea.setText(Files.readString(DEFAULT_INPUT_PATH, StandardCharsets.UTF_8));
+        } catch (IOException ex) {
+            outputArea.setText("No se pudo cargar src/input_1.txt: " + ex.getMessage());
+        }
         sourceArea.setCaretPosition(0);
         updateCursorStatus();
     }

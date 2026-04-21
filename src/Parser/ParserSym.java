@@ -16,7 +16,7 @@ public class ParserSym {
   public static final int CTE_FLOAT = 25;
   public static final int COMP_IGUAL = 31;
   public static final int DOS_PUNTOS = 46;
-  public static final int CONTINUE = 9;
+  public static final int CONTINUE = 8;
   public static final int OP_DIV = 30;
   public static final int COMP_DISTINTO = 32;
   public static final int NOT = 40;
@@ -25,28 +25,28 @@ public class ParserSym {
   public static final int COMP_MENOR = 36;
   public static final int TYPE_INT = 14;
   public static final int UMENOS = 50;
-  public static final int IF = 3;
+  public static final int IF = 2;
   public static final int ID = 23;
   public static final int COMP_MAYOR = 35;
   public static final int EOF = 0;
   public static final int ASIG = 37;
   public static final int READ_FLOAT = 19;
   public static final int error = 1;
-  public static final int PROGRAM = 2;
+  public static final int PROGRAM = 10;
   public static final int COMA = 45;
   public static final int OP_MULT = 29;
   public static final int PAR_C = 42;
   public static final int OP_RESTA = 28;
   public static final int PAR_A = 41;
-  public static final int BREAK = 8;
+  public static final int BREAK = 7;
   public static final int CONST_BOOL = 21;
   public static final int TYPE_FLOAT = 15;
-  public static final int ALT_WHILE = 7;
+  public static final int ALT_WHILE = 6;
   public static final int DECLARE = 11;
   public static final int READ_INT = 18;
-  public static final int ELSE = 5;
+  public static final int ELSE = 4;
   public static final int CTE_STR = 26;
-  public static final int WHILE = 6;
+  public static final int WHILE = 5;
   public static final int DEDENT = 48;
   public static final int CTE_INT = 24;
   public static final int OP_SUMA = 27;
@@ -57,12 +57,11 @@ public class ParserSym {
   public static final int CORCH_C = 44;
   public static final int READ_BOOL = 20;
   public static final int CORCH_A = 43;
-  public static final int ELIF = 4;
-  public static final int PRINT = 10;
+  public static final int ELIF = 3;
+  public static final int PRINT = 9;
   public static final String[] terminalNames = new String[] {
   "EOF",
   "error",
-  "PROGRAM",
   "IF",
   "ELIF",
   "ELSE",
@@ -71,6 +70,7 @@ public class ParserSym {
   "BREAK",
   "CONTINUE",
   "PRINT",
+  "PROGRAM",
   "DECLARE",
   "FIN_DECLARE",
   "FIN_PROGRAM",
