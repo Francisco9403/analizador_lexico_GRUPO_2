@@ -6,6 +6,6 @@
     a = 10
     b = 20
     IF (a < b)
-        resultado = suma_cumulativa(a, [1.5, 2.0, b])
-        PRINT("El resultado es: ", resultado)
+    INDENT resultado = suma_cumulativa(a, [1.5, 2.0, b])
+        PRINT("El resultado es: ", resultado) DEDENT
     FIN_PROGRAM

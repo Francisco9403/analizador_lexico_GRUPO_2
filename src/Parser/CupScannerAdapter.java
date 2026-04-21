@@ -86,6 +86,9 @@ public class CupScannerAdapter implements Scanner {
             case "CORCH_C" -> new Symbol(ParserSym.CORCH_C, left, right, token.valor);
             case "COMA" -> new Symbol(ParserSym.COMA, left, right, token.valor);
             case "DOS_PUNTOS" -> new Symbol(ParserSym.DOS_PUNTOS, left, right, token.valor);
+            case "INDENT" -> new Symbol(ParserSym.INDENT, left, right, token.valor);
+            case "DEDENT" -> new Symbol(ParserSym.DEDENT, left, right, token.valor);
+
 
             default -> throw new SyntaxException(
                     "Token no soportado por esta gramatica CUP: " + token.nombre +
