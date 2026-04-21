@@ -1,0 +1,39 @@
+DECLARE
+integer: num1, num2, counter, index
+float: decimal1, decimal2, result_float
+boolean: flag1, flag2
+float_array: large_array
+FIN_DECLARE
+
+PROGRAM
+num1 = 10
+num2 = 20
+decimal1 = 3.14159
+decimal2 = 2.71828
+flag1 = true
+flag2 = false
+
+result_float = decimal1 + decimal2
+PRINT("pi + e", result_float)
+
+counter = 0
+WHILE (counter < 5) INDENT
+PRINT("Loop iteration", counter)
+
+IF (counter == 3) INDENT
+PRINT("Counter reached 3")
+counter = counter + 1
+CONTINUE
+DEDENT
+
+counter = counter + 1
+DEDENT
+
+IF ((num1 > 0) && (num2 > 0)) INDENT
+PRINT("Both numbers are positive")
+DEDENT
+
+% Tema especial: suma acumulativa con lista entre corchetes
+result_float = suma_cumulativa(2, [1.5, 2.5, 3.5, 4.5, 5.5])
+PRINT("Cumulative sum", result_float)
+FIN_PROGRAM
