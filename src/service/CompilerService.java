@@ -48,10 +48,9 @@ public class CompilerService {
         List<Token> tokens = new ArrayList<>();
 
         Token token;
-        while ((token = lexer.yylex()) != null) {
+        while ((token = lexer.proximoToken()) != null) {
             tokens.add(token);
         }
-
         return tokens;
     }
 }

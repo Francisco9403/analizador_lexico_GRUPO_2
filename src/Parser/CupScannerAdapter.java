@@ -31,9 +31,7 @@ public class CupScannerAdapter implements Scanner {
         return switch (token.nombre) {
             // Estructura y bloques
             case "PROGRAM" -> new Symbol(ParserSym.PROGRAM, left, right, token.valor);
-            case "FIN_PROGRAM" -> new Symbol(ParserSym.FIN_PROGRAM, left, right, token.valor);
             case "DECLARE" -> new Symbol(ParserSym.DECLARE, left, right, token.valor);
-            case "FIN_DECLARE" -> new Symbol(ParserSym.FIN_DECLARE, left, right, token.valor);
 
             // Control de flujo
             case "IF" -> new Symbol(ParserSym.IF, left, right, token.valor);
@@ -86,8 +84,8 @@ public class CupScannerAdapter implements Scanner {
             case "CORCH_C" -> new Symbol(ParserSym.CORCH_C, left, right, token.valor);
             case "COMA" -> new Symbol(ParserSym.COMA, left, right, token.valor);
             case "DOS_PUNTOS" -> new Symbol(ParserSym.DOS_PUNTOS, left, right, token.valor);
-            case "INDENT" -> new Symbol(ParserSym.INDENT, left, right, token.valor);
-            case "DEDENT" -> new Symbol(ParserSym.DEDENT, left, right, token.valor);
+            case "V_INDENT" -> new Symbol(ParserSym.V_INDENT, left, right, null);
+            case "V_DEDENT" -> new Symbol(ParserSym.V_DEDENT, left, right, null);
 
 
             default -> throw new SyntaxException(

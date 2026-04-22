@@ -25,7 +25,7 @@ parser code {:
 :};
 
 terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
-terminal PROGRAM, DECLARE, FIN_DECLARE, FIN_PROGRAM;
+terminal PROGRAM, DECLARE;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
 terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
@@ -33,7 +33,7 @@ terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
 terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
 terminal ASIG, AND, OR, NOT;
 terminal PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
-terminal INDENT, DEDENT, SUMA_ACUM;
+terminal V_INDENT, V_DEDENT, SUMA_ACUM;
 terminal UMENOS;
 
 
@@ -50,7 +50,7 @@ nonterminal String expresion, lista_expresiones;
 nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
 nonterminal String comparacion, valorLiteral;
 nonterminal String sentencia_control, bloque, lista_sentencias;
-nonterminal String alt_while_part, else_part, elif_part;
+nonterminal String alt_while_part, final_if;
 
 start with program;
 
@@ -68,9 +68,9 @@ program ::= seccion_declaracion:bd seccion_sentencias:bs
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-seccion_declaracion ::= DECLARE bloque_declaraciones:bd FIN_DECLARE{:
+seccion_declaracion ::= DECLARE bloque_declaraciones:bd {:
                     RESULT = bd; :}
-                  | DECLARE FIN_DECLARE
+                  | DECLARE
                   ;
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
@@ -106,9 +106,9 @@ tipo ::= TYPE_INT    {: RESULT = "INT"; :}
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)
    -------------------------------------------------------- */
-seccion_sentencias ::= PROGRAM bloque_sentencias:bs FIN_PROGRAM{:
+seccion_sentencias ::= PROGRAM bloque_sentencias:bs{:
                     RESULT = bs;
-                    :}| PROGRAM FIN_PROGRAM;
+                    :}| PROGRAM;
 
 bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
                    RESULT = bs + "\n" + s;
@@ -139,7 +139,7 @@ impresion ::= PRINT PAR_A expresionOr:e PAR_C{:
            :}| PRINT PAR_A CTE_STR PAR_C
               ;
 
-bloque ::= INDENT lista_sentencias:ls DEDENT{:
+bloque ::= V_INDENT lista_sentencias:ls V_DEDENT{:
                   RESULT = ls;
                   :};
 
@@ -151,24 +151,25 @@ sentencia_control ::= BREAK
                     | CONTINUE
                     ;
 
-sentencia_if ::= IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el else_part:es {: RESULT= c + "\n" + b + "\n" + el + "\n" + es ;:}
-               | IF PAR_A expresionOr:c PAR_C bloque:b else_part:es {: RESULT= c + "\n" + b + "\n" + es ;:}
-               | IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el {: RESULT= c + "\n" + b + "\n" + el ;:}
-               ;
+sentencia_if ::= IF expresionOr:c bloque:b final_if:f {:
+                     RESULT = c + "\n" + b + "\n" + f;
+                 :};
 
-/* Regla recursiva para manejar N cantidad de ELIF */
-elif_part ::= elif_part:el ELIF PAR_A expresionOr:c PAR_C bloque:b {: RESULT= el + "\n" + c + "\n" + b;:}
-            |
-            ;
+final_if ::= ELIF expresionOr:c bloque:b final_if:f {:
+                 RESULT = c + "\n" + b + "\n" + f;
+             :}
+           | ELSE bloque:b {:
+                 RESULT = b;
+             :}
+           | /* vacío */ {:
+                 RESULT = "";
+             :}
+           ;
 
-/* El ELSE es opcional */
-else_part ::= ELSE bloque:b {: RESULT= b;:}
-            ;
-
-sentencia_while ::= WHILE PAR_A expresionOr:c PAR_C bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
 
 /* Puede haber múltiples bloques ALT_WHILE */
-alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
+alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
                  | /* vacio */
                  ;
 /* --------------------------------------------------------

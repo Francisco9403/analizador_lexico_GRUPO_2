@@ -31,11 +31,22 @@ import TablaSimbolo.TablaSimbolo;
         return new Token(nombre, this.yyline + 1, this.yycolumn + 1, valor);
     }
 
+    private java.util.Stack<Integer> nivelesIndentacion = new java.util.Stack<>();
+    private int espaciosActuales = 0;
+    private java.util.LinkedList<Token> colaTokens = new java.util.LinkedList<>();
+
+    { nivelesIndentacion.push(0); }
+
+    public Token proximoToken() throws java.io.IOException {
+        if (!colaTokens.isEmpty()) return colaTokens.removeFirst();
+        return yylex();
+        }
+
 %}
 
 /* Macros */
 LineTerminator = \r|\n|\r\n
-WhiteSpace     = {LineTerminator} | [ \t\f]
+WhiteSpace     = [ \t\f]
 
 /* Letras Unicode para soportar tildes y eñes según el estándar */
 Letter         = [:letter:]
@@ -46,12 +57,44 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
 /* Formatos: 99.99 , 99. , .999 */
 FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
+%state INDENTANDO
 %state CADENA
 %state COMENTARIO
 
 %%
+<INDENTANDO> {
+  " "  { espaciosActuales++; }
+  \t   { espaciosActuales += 4; }
+  {LineTerminator} { espaciosActuales = 0; }
+
+  [^ \t\r\n] {
+      int nivelAnterior = nivelesIndentacion.peek();
+
+      if (espaciosActuales > nivelAnterior) {
+          nivelesIndentacion.push(espaciosActuales);
+          colaTokens.add(token("V_INDENT")); // Token virtual de inicio
+      }
+      else if (espaciosActuales < nivelAnterior) {
+          while (espaciosActuales < nivelesIndentacion.peek()) {
+              nivelesIndentacion.pop();
+              colaTokens.add(token("V_DEDENT")); // Token virtual de fin
+          }
+      }
+      yypushback(1);
+      yybegin(YYINITIAL);
+
+      // Si generamos tokens virtuales, devolvemos el primero INMEDIATAMENTE
+      // para que el parser lo reciba ANTES que el texto que sigue.
+      if (!colaTokens.isEmpty()) {
+          return colaTokens.removeFirst();
+      }
+  }
+}
 
 <YYINITIAL> {
+
+  {LineTerminator} { espaciosActuales = 0; yybegin(INDENTANDO); }
+
   /* Palabras Reservadas */
   "PROGRAM"            { return token("PROGRAM", yytext()); }
   "DECLARE"            { return token("DECLARE", yytext()); }
@@ -60,8 +103,6 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "ELSE"               { return token("ELSE", yytext()); }
   "WHILE"              { return token("WHILE", yytext()); }
   "ALT_WHILE"          { return token("ALT_WHILE", yytext()); }
-  "INDENT"             { return token("INDENT", yytext()); }
-  "DEDENT"             { return token("DEDENT", yytext()); }
   "BREAK"              { return token("BREAK", yytext()); }
   "CONTINUE"           { return token("CONTINUE", yytext()); }
   "PRINT"              { return token("PRINT", yytext()); }
@@ -84,13 +125,7 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   /* TEMA ESPECIAL: Grupo 2 */
   "suma_cumulativa"    { return token("SUMA_ACUM", yytext()); }
 
-  "FIN_PROGRAM"        { return token("FIN_PROGRAM", yytext()); }
-  "FIN_DECLARE"        { return token("FIN_DECLARE", yytext()); }
-
-  /* Identificadores y Números
-  {Identifier}         { return token("ID", yytext()); }
-  {DecIntegerLiteral}  { return token("CTE_INT", yytext()); }
-  {FloatLiteral}       { return token("CTE_FLOAT", yytext()); }*/
+  /* Identificadores y Números*/
 
 {Identifier} {
     // Agregamos el ID a la tabla. Por ahora sin tipo (se lo dará el Parser)
@@ -114,7 +149,7 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "-"                  { return token("OP_RESTA", yytext()); }
   "*"                  { return token("OP_MULT", yytext()); }
   "/"                  { return token("OP_DIV", yytext()); }
-  
+
   /* Operadores de Comparación */
   "=="                 { return token("COMP_IGUAL", yytext()); }
   "!="                 { return token("COMP_DISTINTO", yytext()); }
