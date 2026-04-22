@@ -220,30 +220,30 @@ sentencia_control ::= BREAK    {:
                     parser.printLog("sentencia_control ::= CONTINUE");
                     RESULT = "CONTINUE"; :};
 
-sentencia_if ::= IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el else_part:es
+sentencia_if ::= IF expresionOr:c  bloque:b elif_part:el else_part:es
                {:
-                  parser.printLog("sentencia_if ::= IF (expresionOr) bloque elif_part else_part");
-                  RESULT = "IF(" + c + ") {\n" + b + "\n}" + el + es;
+                  parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
+                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es;
                :}
                | IF expresionOr:c bloque:b elif_part:el else_part:es
                {:
                   parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = "IF(" + c + ") {\n" + b + "\n}" + el + es; :};
+                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es; :};
 
-sentencia_while ::= WHILE PAR_A expresionOr:c PAR_C bloque:b alt_while_part:aw
+sentencia_while ::= WHILE  expresionOr:c  bloque:b alt_while_part:aw
                   {:
-                     parser.printLog("sentencia_while ::= WHILE (expresionOr) bloque alt_while_part");
-                     RESULT = "WHILE(" + c + ") {\n" + b + "\n}" + aw;
+                     parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
+                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw;
                   :}
                   | WHILE expresionOr:c bloque:b alt_while_part:aw
                   {:
                      parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
-                     RESULT = "WHILE(" + c + ") {\n" + b + "\n}" + aw; :};
+                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw; :};
 
-elif_part ::= elif_part:el ELIF PAR_A expresionOr:c PAR_C bloque:b
+elif_part ::= elif_part:el ELIF expresionOr:c bloque:b
             {:
-               parser.printLog("elif_part ::= elif_part ELIF (expresionOr) bloque");
-               RESULT = el + "\nELIF(" + c + ") {\n" + b + "\n}"; :}
+               parser.printLog("elif_part ::= elif_part ELIF expresionOr bloque");
+               RESULT = el + "\nELIF" + c + " {\n" + b + "\n}"; :}
             | /* vacio */
             {:
                parser.printLog("elif_part ::= (vacio)");

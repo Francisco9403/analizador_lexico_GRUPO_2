@@ -28,7 +28,7 @@ import javax.swing.text.BadLocationException;
 
 public class CompilerFrame extends JFrame {
 
-    private static final Path DEFAULT_INPUT_PATH = Path.of("src", "test/test.txt");
+    private static final Path DEFAULT_INPUT_PATH = Path.of("src", "test/input_1.txt");
 
     private final JTextArea sourceArea;
     private final JTextArea outputArea;

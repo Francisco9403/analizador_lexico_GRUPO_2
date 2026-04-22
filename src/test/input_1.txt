@@ -1,11 +1,60 @@
-    DECLARE
-    integer: a, b
-    float: resultado
-    FIN_DECLARE
-    PROGRAM
-    a = 10
-    b = 20
-    IF (a < b)
-    INDENT resultado = suma_cumulativa(a, [1.5, 2.0, b])
-        PRINT("El resultado es: ", resultado) DEDENT
-    FIN_PROGRAM
+DECLARE
+    integer: contador_items, capacidad_maxima, items_rechazados, prioridad
+    float: peso_total, peso_limite, promedio_peso, volumen_paquete
+    boolean: sistema_activo, error_sensor, es_urgente
+    float_array: registros_pesado
+
+PROGRAM
+    % 1. Inicialización y Entrada (Probamos READs y Constantes)
+    contador_items = 0
+    capacidad_maxima = 10
+    peso_total = 0.0
+    peso_limite = 500.50
+    sistema_activo = true
+    error_sensor = false
+
+    % 2. Bucle Principal con Lógica de Control (WHILE + CONTINUE + BREAK)
+    WHILE (contador_items < capacidad_maxima) && sistema_activo
+        PRINT("Procesando item numero:", contador_items)
+
+        volumen_paquete = 15.0
+
+        % Prueba de Operadores Aritméticos Completo (+, -, *, /)
+        peso_total = (peso_total + 45.5 * 2.0) / 1.1
+
+        % Prueba de Comparadores Completo (==, !=, <, >, <=, >=)
+        IF contador_items != 5
+            PRINT("Item estandar detectado")
+
+        IF (contador_items <= 2) || (peso_total >= peso_limite)
+            PRINT("Alerta de carga inicial o sobrepeso")
+
+        % Control de flujo
+        IF contador_items == 8
+            PRINT("Capacidad casi llena, terminando...")
+            BREAK
+
+        IF error_sensor
+            CONTINUE
+
+        contador_items = contador_items + 1
+
+    % 3. Estructuras de decisión con ELIF y ELSE (Lógica booleana)
+    IF (peso_total > 400.0) && !error_sensor
+        PRINT("Estado: Carga Pesada")
+    ELIF peso_total > 200.0
+        PRINT("Estado: Carga Media")
+    ELSE
+        PRINT("Estado: Carga Ligera")
+
+    % 4. TEMA ESPECIAL GRUPO 2: Suma Acumulativa
+    % Probamos la función con una lista y un multiplicador
+    promedio_peso = suma_cumulativa(5, [10.0, 20.5, 30.0])
+
+    PRINT("Resultado Suma Acumulativa Grupo 2:", promedio_peso)
+
+    % 5. Cierre con lógica de negación
+    IF !sistema_activo || (contador_items == 0)
+        PRINT("El sistema no proceso datos.")
+    ELSE
+        PRINT("Proceso de deposito finalizado correctamente.")
