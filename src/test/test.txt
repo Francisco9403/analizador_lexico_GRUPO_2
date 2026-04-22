@@ -19,12 +19,12 @@ counter = 0
 WHILE counter < 5
     PRINT("Loop iteration", counter)
 
-IF counter == 3
-    PRINT("Counter reached 3")
-    counter = counter + 1
-    CONTINUE
+    IF counter == 3
+        PRINT("Counter reached 3")
+        counter = counter + 1
+        CONTINUE
 
-counter = counter + 1
+    counter = counter + 1
 
 IF ((num1 > 0) && (num2 > 0))
     PRINT("Both numbers are positive")

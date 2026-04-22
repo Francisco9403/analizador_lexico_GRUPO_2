@@ -50,8 +50,7 @@ nonterminal String expresion, lista_expresiones;
 nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
 nonterminal String comparacion, valorLiteral;
 nonterminal String sentencia_control, bloque, lista_sentencias;
-nonterminal String alt_while_part, final_if;
-
+nonterminal String alt_while_part, elif_part, else_part;
 start with program;
 
 /* --------------------------------------------------------
@@ -68,10 +67,11 @@ program ::= seccion_declaracion:bd seccion_sentencias:bs
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-seccion_declaracion ::= DECLARE bloque_declaraciones:bd {:
-                    RESULT = bd; :}
-                  | DECLARE
-                  ;
+seccion_declaracion ::= DECLARE bloque_declaraciones:bd {: RESULT = bd; :}
+                      | DECLARE {: RESULT = ""; :};
+
+seccion_sentencias ::= PROGRAM bloque_sentencias:bs {: RESULT = bs; :}
+                     | PROGRAM {: RESULT = ""; :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
                         RESULT = bd + "\n" + d;
@@ -128,16 +128,19 @@ sentencia ::= asignacion:a{:
             RESULT= sc;
           :};
 
-asignacion ::= ID ASIG expresionOr:e{:
-              RESULT= e;
-            :};
+asignacion ::= ID:id ASIG expresionOr:e {:
+                RESULT = id + " = " + e;
+              :};
 
-impresion ::= PRINT PAR_A expresionOr:e PAR_C{:
-             RESULT = e;
-           :}| PRINT PAR_A CTE_STR COMA expresionOr:e PAR_C{:
-             RESULT = e;
-           :}| PRINT PAR_A CTE_STR PAR_C
-              ;
+impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
+                RESULT = "PRINT(" + e + ")";
+              :}
+            | PRINT PAR_A CTE_STR:s COMA expresionOr:e PAR_C {:
+                RESULT = "PRINT(\"" + s + "\", " + e + ")";
+              :}
+            | PRINT PAR_A CTE_STR:s PAR_C {:
+                RESULT = "PRINT(\"" + s + "\")";
+              :};
 
 bloque ::= V_INDENT lista_sentencias:ls V_DEDENT{:
                   RESULT = ls;
@@ -147,104 +150,102 @@ lista_sentencias ::= lista_sentencias:ls sentencia:s{: RESULT= ls + "\n" + s;:}
                   | sentencia:s {:RESULT = s;:}
                   ;
 
-sentencia_control ::= BREAK
-                    | CONTINUE
-                    ;
+sentencia_control ::= BREAK    {: RESULT = "BREAK";    :}
+                    | CONTINUE {: RESULT = "CONTINUE"; :};
 
-sentencia_if ::= IF expresionOr:c bloque:b final_if:f {:
-                     RESULT = c + "\n" + b + "\n" + f;
-                 :};
+sentencia_if ::= IF PAR_A expresionOr:c PAR_C bloque:b elif_part:el else_part:es
+               {: RESULT = "IF(" + c + ") {\n" + b + "\n}" + el + es; :}
+               | IF expresionOr:c bloque:b elif_part:el else_part:es
+               {: RESULT = "IF(" + c + ") {\n" + b + "\n}" + el + es; :};
 
-final_if ::= ELIF expresionOr:c bloque:b final_if:f {:
-                 RESULT = c + "\n" + b + "\n" + f;
-             :}
-           | ELSE bloque:b {:
-                 RESULT = b;
-             :}
-           | /* vacío */ {:
-                 RESULT = "";
-             :}
-           ;
+sentencia_while ::= WHILE PAR_A expresionOr:c PAR_C bloque:b alt_while_part:aw
+                  {: RESULT = "WHILE(" + c + ") {\n" + b + "\n}" + aw; :}
+                  | WHILE expresionOr:c bloque:b alt_while_part:aw
+                  {: RESULT = "WHILE(" + c + ") {\n" + b + "\n}" + aw; :};
 
-sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {: RESULT= c + "\n" + b + "\n" + aw ;:} ;
+elif_part ::= elif_part:el ELIF PAR_A expresionOr:c PAR_C bloque:b
+            {: RESULT = el + "\nELIF(" + c + ") {\n" + b + "\n}"; :}
+            | /* vacio */
+            {: RESULT = ""; :}
+            ;
 
-/* Puede haber múltiples bloques ALT_WHILE */
-alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {: RESULT= aw + "\n" + c + "\n" + b ;:}
+else_part ::= ELSE bloque:b
+            {: RESULT = "\nELSE {\n" + b + "\n}"; :}
+            | /* vacio */
+            {: RESULT = ""; :}
+            ;
+
+alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b
+                 {: RESULT = aw + "\nALT_WHILE(" + c + ") {\n" + b + "\n}"; :}
                  | /* vacio */
+                 {: RESULT = ""; :}
                  ;
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
 
-expresionOr::= expresionAnd:ea OR expresionOr:eo {:
-              RESULT = ea + "\n" + eo;
-            :}| expresionAnd:ea{:
-              RESULT = ea;
-            :};
-
-expresionAnd::= expresionNot:en AND expresionAnd:ea{:
-              RESULT = en + "\n" + ea;
-            :}| expresionNot:en{:
-              RESULT = en;
-            :};
-
-expresionNot ::= NOT expresionNot:en{:
-               RESULT = en ;
-             :}| comparacion:c{:
-               RESULT= c;
-             :};
-
-
-comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + "\n" + es2;:}
-              | expresionSumRes:es {: RESULT = es;:}
-              ;
-
-expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {: RESULT = es + "\n" + em;:}
-                | expresionSumRes:es OP_RESTA expresionMultDiv:em {: RESULT = es + "\n" + em;:}
-                | expresionMultDiv:em {: RESULT = em;:}
-                ;
-
-expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {: RESULT = em + "\n" + emu;:}
-                 | expresionMultDiv:em OP_DIV expresionMenosU:emu {: RESULT = em + "\n" + emu;:}
-                 | expresionMenosU:emu {: RESULT = emu;:}
-                 ;
-
-expresionMenosU::= OP_RESTA expresion:e {: RESULT = e;:} %prec UMENOS
-                | expresion:e {: RESULT = e;:}
-                ;
-
-expresion ::= PAR_A expresionOr:e PAR_C {: RESULT = e;:}
-            | ID
-            | valorLiteral:vl {: RESULT = vl;:}
-            /* FUNCIONES DE LECTURA */
-            | ID CORCH_A expresionOr:e CORCH_C {: RESULT = e;:}
-            | READ_INT PAR_A PAR_C
-            | READ_FLOAT PAR_A PAR_C
-            | READ_BOOL PAR_A PAR_C
-            /* TEMA ESPECIAL GRUPO 2: Suma Acumulativa */
-            | sum_acum:sm {: RESULT = sm;:}
+expresionOr::= expresionAnd:ea OR expresionOr:eo {: RESULT = ea + " || " + eo; :}
+            | expresionAnd:ea {: RESULT = ea; :}
             ;
 
-valorLiteral ::= CTE_INT
-              | CTE_FLOAT
-              | CONST_BOOL
-              | CTE_ARREGLO
+expresionAnd::= expresionNot:en AND expresionAnd:ea {: RESULT = en + " && " + ea; :}
+            | expresionNot:en {: RESULT = en; :}
+            ;
+
+expresionNot ::= NOT expresionNot:en {: RESULT = "!" + en; :}
+             | comparacion:c {: RESULT = c; :}
+             ;
+
+
+
+expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {: RESULT = es + " + " + em; :}
+                | expresionSumRes:es OP_RESTA expresionMultDiv:em {: RESULT = es + " - " + em; :}
+                | expresionMultDiv:em {: RESULT = em; :}
+                ;
+
+expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {: RESULT = em + " * " + emu; :}
+                 | expresionMultDiv:em OP_DIV expresionMenosU:emu {: RESULT = em + " / " + emu; :}
+                 | expresionMenosU:emu {: RESULT = emu; :}
+                 ;
+
+comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {: RESULT = es1 + " == " + es2; :}
+              | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {: RESULT = es1 + " != " + es2; :}
+              | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {: RESULT = es1 + " > " + es2; :}
+              | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {: RESULT = es1 + " < " + es2; :}
+              | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + " >= " + es2; :}
+              | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {: RESULT = es1 + " <= " + es2; :}
+              | expresionSumRes:es {: RESULT = es; :}
               ;
 
-sum_acum::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C{:
-            RESULT = e + "\n" + le;
-            :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C{:
-            RESULT = e;
-            :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C{:
-            RESULT = e + "\n" + le;
-            :};
+
+expresionMenosU ::= OP_RESTA expresion:e {: RESULT = "-" + e; :} %prec UMENOS
+                | expresion:e {: RESULT = e; :}
+                ;
+
+/* --- Dentro de la sección de EXPRESIONES --- */
+expresion ::= PAR_A expresionOr:e PAR_C {: RESULT = "(" + e + ")"; :}
+            | ID:id {: RESULT = id; :}
+            | valorLiteral:vl {: RESULT = vl; :}
+            | ID:id CORCH_A expresionOr:e CORCH_C {: RESULT = id + "[" + e + "]"; :}
+            | READ_INT PAR_A PAR_C   {: RESULT = "READ_INT()";   :}
+            | READ_FLOAT PAR_A PAR_C {: RESULT = "READ_FLOAT()"; :}
+            | READ_BOOL PAR_A PAR_C  {: RESULT = "READ_BOOL()";  :}
+            | sum_acum:sm {: RESULT = sm; :}
+            ;
+
+/* --- Dentro de la sección de valorLiteral --- */
+valorLiteral ::= CTE_INT:n    {: RESULT = n; :}
+              | CTE_FLOAT:f  {: RESULT = f; :}
+              | CONST_BOOL:b {: RESULT = b; :}
+              | CTE_ARREGLO:a {: RESULT = a; :}
+              ;
+
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C
+            {: RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C
+            {: RESULT = "suma_cumulativa(" + e + ", [])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C
+            {: RESULT = "suma_cumulativa(" + e + ", " + le + ")"; :};
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
@@ -253,8 +254,6 @@ sum_acum::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORC
 /*CORCH_A lista_expresiones CORCH_C
                   | CORCH_A CORCH_C ;  Arreglo vacio */
 
-lista_expresiones ::= lista_expresiones:li COMA expresionOr:e{:
-                    RESULT = li + "\n" + e;
-                    :}| expresionOr:e{:
-                    RESULT = e;
-                    :};
+
+lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {: RESULT = li + ", " + e; :}
+                    | expresionOr:e {: RESULT = e; :};
