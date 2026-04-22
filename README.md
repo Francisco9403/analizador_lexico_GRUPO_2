@@ -68,7 +68,7 @@ src/
 
 ---
 
-## 🖥️ Uso de la Interfaz Gráfica (GUI)
+## Uso de la Interfaz Gráfica (GUI)
 
 La aplicación cuenta con un entorno visual diseñado para facilitar la escritura, prueba y depuración de código en nuestro lenguaje.
 
@@ -91,7 +91,7 @@ La aplicación cuenta con un entorno visual diseñado para facilitar la escritur
 
 ---
 
-## 🔍 Auditoría (Logs del Parser)
+## Auditoría (Logs del Parser)
 
 Mientras interactuás con la GUI, la **consola de tu IDE** (en segundo plano) mostrará el proceso de reducción en tiempo real para verificar la validez de la gramática formal:
 - `[PARSER LOG] sentencia_if ::= IF expresionOr bloque elif_part else_part`
