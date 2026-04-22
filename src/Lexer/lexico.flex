@@ -86,22 +86,23 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
   [^ \t\r\n] {
       int nivelAnterior = nivelesIndentacion.peek();
+      boolean lineaContinuacionConComa = ",".equals(yytext());
 
-      if (espaciosActuales > nivelAnterior) {
-          nivelesIndentacion.push(espaciosActuales);
-          colaTokens.add(token("V_INDENT")); // Token virtual de inicio
-      }
-      else if (espaciosActuales < nivelAnterior) {
-          while (espaciosActuales < nivelesIndentacion.peek()) {
-              nivelesIndentacion.pop();
-              colaTokens.add(token("V_DEDENT")); // Token virtual de fin
+      if (!lineaContinuacionConComa) {
+          if (espaciosActuales > nivelAnterior) {
+              nivelesIndentacion.push(espaciosActuales);
+              colaTokens.add(token("V_INDENT"));
+          }
+          else if (espaciosActuales < nivelAnterior) {
+              while (espaciosActuales < nivelesIndentacion.peek()) {
+                  nivelesIndentacion.pop();
+                  colaTokens.add(token("V_DEDENT"));
+              }
           }
       }
       yypushback(1);
       yybegin(YYINITIAL);
 
-      // Si generamos tokens virtuales, devolvemos el primero INMEDIATAMENTE
-      // para que el parser lo reciba ANTES que el texto que sigue.
       if (!colaTokens.isEmpty()) {
           return colaTokens.removeFirst();
       }
