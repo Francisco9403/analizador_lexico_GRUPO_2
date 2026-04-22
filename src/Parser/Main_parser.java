@@ -12,10 +12,6 @@ import java.util.List;
  * @author itt
  */
 public class Main_parser {
-
-    /**
-     * @param args the command line arguments
-     */
     public static void main(String[] args) throws Exception {
         String path = "./src/input_1.txt";
         System.out.println("Análisis sintáctico iniciado:");
@@ -24,18 +20,17 @@ public class Main_parser {
 
         List<Token> tokens = new ArrayList<>();
         Token token;
-        while ((token = lexer.yylex()) != null) {
+
+        while ((token = lexer.proximoToken()) != null) {
             tokens.add(token);
         }
 
-
         Parser parser = new Parser(new CupScannerAdapter(tokens));
-        try{
+        try {
             parser.parse();
             System.out.println("Análisis sintáctico finalizado.");
-        }
-        catch (Exception e){
-            System.out.println(e.getMessage());
+        } catch (Exception e) {
+            System.out.println("Error en el parseo: " + e.getMessage());
         }
     }
 }

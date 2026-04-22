@@ -35,12 +35,28 @@ import TablaSimbolo.TablaSimbolo;
     private int espaciosActuales = 0;
     private java.util.LinkedList<Token> colaTokens = new java.util.LinkedList<>();
 
-    { nivelesIndentacion.push(0); }
+    {
+                nivelesIndentacion.push(0);
+                yybegin(INDENTANDO);
+            }
 
     public Token proximoToken() throws java.io.IOException {
-        if (!colaTokens.isEmpty()) return colaTokens.removeFirst();
-        return yylex();
-        }
+                // 1. Si hay tokens en la cola (DEDENTs pendientes), los largamos de a uno
+                if (!colaTokens.isEmpty()) return colaTokens.removeFirst();
+
+                Token t = yylex();
+
+                // 2. Si yylex() devolvió null es porque llegó al final del archivo (EOF)
+                if (t == null) {
+                    // Si la pila tiene más que el nivel base (0), generamos los DEDENTs finales
+                    if (nivelesIndentacion.size() > 1) {
+                        nivelesIndentacion.pop();
+                        return token("V_DEDENT");
+                    }
+                    return null; // Fin real de la transmisión
+                }
+                return t;
+            }
 
 %}
 
@@ -60,6 +76,7 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 %state INDENTANDO
 %state CADENA
 %state COMENTARIO
+%state ARREGLO
 
 %%
 <INDENTANDO> {
@@ -164,13 +181,17 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "||"                 { return token("OR", yytext()); }
   "!"                  { return token("NOT", yytext()); }
 
-  /* Puntuación y Delimitadores */
-  "("                  { return token("PAR_A", yytext()); }
-  ")"                  { return token("PAR_C", yytext()); }
-  "["                  { return token("CORCH_A", yytext()); }
-  "]"                  { return token("CORCH_C", yytext()); }
-  ","                  { return token("COMA", yytext()); }
-  ":"                  { return token("DOS_PUNTOS", yytext()); }
+   /* Puntuación y Delimitadores */
+   "("                  { return token("PAR_A", yytext()); }
+   ")"                  { return token("PAR_C", yytext()); }
+   "["                  { string.setLength(0);
+                          string_yyline = this.yyline;
+                          string_yycolumn = this.yycolumn;
+                          string.append("[");
+                          yybegin(ARREGLO); }
+   "]"                  { return token("CORCH_C", yytext()); }
+   ","                  { return token("COMA", yytext()); }
+   ":"                  { return token("DOS_PUNTOS", yytext()); }
 
   /* Comentarios unilínea */
   "%".* { /* Ignorar */ }
@@ -191,6 +212,17 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "*}"                 { yybegin(YYINITIAL); }
   [^]                  { /* Ignorar contenido */ }
   <<EOF>>              { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
+}
+
+<ARREGLO> {
+  "]"                  {
+                           yybegin(YYINITIAL);
+                           String arreglo = string.append("]").toString();
+                           tablaSimbolos.addConstant("_" + arreglo, "CTE_ARREGLO", arreglo, String.valueOf(arreglo.length()));
+                           return token("CTE_ARREGLO", arreglo);
+                       }
+  [^]                  { string.append(yytext()); }
+  <<EOF>>              { throw new Error("Error Léxico: Arreglo sin cerrar al final del archivo."); }
 }
 
 <CADENA> {

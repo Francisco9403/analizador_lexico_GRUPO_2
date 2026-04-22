@@ -53,7 +53,7 @@ nonterminal String sentencia_if, sentencia_while;
 nonterminal String expresion, lista_expresiones;
 
 nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
-nonterminal String comparacion, valorLiteral;
+nonterminal String comparacion, valorLiteral, lvalue;
 nonterminal String sentencia_control, bloque, lista_sentencias;
 nonterminal String alt_while_part, elif_part, else_part;
 start with program;
@@ -74,19 +74,25 @@ program ::= seccion_declaracion:bd seccion_sentencias:bs
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-seccion_declaracion ::= DECLARE bloque_declaraciones:bd {:
-                    parser.printLog("seccion_declaracion ::= DECLARE bloque_declaraciones");
-                    RESULT = bd; :}
-                  | DECLARE {:
-                    parser.printLog("seccion_declaracion ::= DECLARE");
-                    RESULT = ""; :};
+seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones:bd V_DEDENT
+                    {:
+                        parser.printLog("seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones V_DEDENT");
+                        RESULT = bd;
+                    :}
+                    | DECLARE {:
+                        parser.printLog("seccion_declaracion ::= DECLARE (Seccion vacia)");
+                        RESULT = "";
+                    :};
 
-seccion_sentencias ::= PROGRAM bloque_sentencias:bs {:
-                     parser.printLog("seccion_sentencias ::= PROGRAM bloque_sentencias");
-                     RESULT = bs; :}
-                     | PROGRAM {:
-                     parser.printLog("seccion_sentencias ::= PROGRAM");
-                     RESULT = ""; :};
+seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
+                    {:
+                        parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
+                        RESULT = bs;
+                    :}
+                    | PROGRAM {:
+                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
+                        RESULT = "";
+                    :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
                         parser.printLog("bloque_declaraciones ::= bloque_declaraciones declaracion");
@@ -156,10 +162,30 @@ sentencia ::= asignacion:a{:
             RESULT= sc;
           :};
 
-asignacion ::= ID:id ASIG expresionOr:e {:
-                parser.printLog("asignacion ::= ID ASIG expresionOr");
-                RESULT = id + " = " + e;
+asignacion ::= lvalue:lv ASIG expresionOr:e {:
+                parser.printLog("asignacion ::= lvalue ASIG expresionOr");
+                RESULT = lv + " = " + e;
+              :}
+              | lvalue:lv ASIG CORCH_A lista_expresiones:le CORCH_C {:
+                parser.printLog("asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
+                RESULT = lv + " = [" + le + "]";
+              :}
+              | lvalue:lv ASIG CORCH_A CORCH_C {:
+                parser.printLog("asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
+                RESULT = lv + " = []";
+              :}
+              | lvalue:lv ASIG CTE_ARREGLO:a {:
+                parser.printLog("asignacion ::= lvalue ASIG CTE_ARREGLO");
+                RESULT = lv + " = " + a;
               :};
+
+lvalue ::= ID:id {:
+           parser.printLog("lvalue ::= ID");
+           RESULT = id; :}
+         | ID:id CORCH_A expresionOr:index CORCH_C {:
+           parser.printLog("lvalue ::= ID CORCH_A expresionOr CORCH_C");
+           RESULT = id + "[" + index + "]"; :}
+         ;
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
                 parser.printLog("impresion ::= PRINT PAR_A expresionOr PAR_C");
