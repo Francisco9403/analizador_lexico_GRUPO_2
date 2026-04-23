@@ -1,5 +1,5 @@
 DECLARE
-    integer: contador_items, capacidad_maxima, items_rechazados, prioridad
+    integer: contador_items, capacidad_maxima, items_rechazados, prioridad, x
     float: peso_total, peso_limite, promedio_peso, volumen_paquete, peso_float
     boolean: sistema_activo, error_sensor, es_urgente
     float_array: registros_pesado
@@ -12,14 +12,17 @@ PROGRAM
     peso_limite = 500.50
     sistema_activo = true
     error_sensor = false
+    x = 2
 
-    % 1.1 Prueba de arreglos con indice entero
+    % 1.1 Prueba de arreglos con indice entero y expresionOr como indice
     registros_pesado = [1.0,2.0,0.]
     peso_total = registros_pesado[1]
+    peso_total = registros_pesado[0 + x]
+    peso_total = registros_pesado[(0 + x)]
 
     {*
       Prueba negativa de indice no entero en arreglo.
-      Se deja comentada para no romper este caso de prueba principal.
+      Esperado (cuando se agregue chequeo semantico): error por indice no integer.
       peso_float = registros_pesado[2.0]
     *}
 

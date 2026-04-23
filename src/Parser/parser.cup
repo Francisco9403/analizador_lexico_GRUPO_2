@@ -53,7 +53,7 @@ nonterminal String sentencia_if, sentencia_while;
 nonterminal String expresion, lista_expresiones;
 
 nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
-nonterminal String comparacion, valorLiteral, lvalue, indice_entero;
+nonterminal String comparacion, valorLiteral, lvalue;
 nonterminal String sentencia_control, bloque, lista_sentencias;
 nonterminal String alt_while_part, elif_part, else_part;
 start with program;
@@ -182,8 +182,8 @@ asignacion ::= lvalue:lv ASIG expresionOr:e {:
 lvalue ::= ID:id {:
            parser.printLog("lvalue ::= ID");
            RESULT = id; :}
-         | ID:id CORCH_A indice_entero:index CORCH_C {:
-           parser.printLog("lvalue ::= ID CORCH_A indice_entero CORCH_C");
+         | ID:id CORCH_A expresionOr:index CORCH_C {:
+           parser.printLog("lvalue ::= ID CORCH_A expresionOr CORCH_C");
            RESULT = id + "[" + index + "]"; :}
          ;
 
@@ -361,8 +361,8 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
             | valorLiteral:vl {:
             parser.printLog("expresion ::= valorLiteral");
             RESULT = vl; :}
-            | ID:id CORCH_A indice_entero:index CORCH_C {:
-            parser.printLog("expresion ::= ID CORCH_A indice_entero CORCH_C");
+            | ID:id CORCH_A expresionOr:index CORCH_C {:
+            parser.printLog("expresion ::= ID CORCH_A expresionOr CORCH_C");
             RESULT = id + "[" + index + "]"; :}
             | READ_INT PAR_A PAR_C   {:
             parser.printLog("expresion ::= READ_INT PAR_A PAR_C");
@@ -378,10 +378,6 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
             RESULT = sm; :}
             ;
 
-indice_entero ::= CTE_INT:n {:
-                  parser.printLog("indice_entero ::= CTE_INT");
-                  RESULT = n; :}
-                ;
 
 /* --- Dentro de la sección de valorLiteral --- */
 valorLiteral ::= CTE_INT:n    {: parser.printLog("valorLiteral ::= CTE_INT"); RESULT = n; :}
