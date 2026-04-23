@@ -88,10 +88,6 @@ seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
                     {:
                         parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
                         RESULT = bs;
-                    :}
-                    | PROGRAM {:
-                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
-                        RESULT = "";
                     :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
@@ -132,10 +128,6 @@ tipo ::= TYPE_INT    {: parser.printLog("tipo ::= TYPE_INT"); RESULT = "INT"; :}
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)
    -------------------------------------------------------- */
-seccion_sentencias ::= PROGRAM bloque_sentencias:bs{:
-                    parser.printLog("seccion_sentencias ::= PROGRAM bloque_sentencias");
-                    RESULT = bs;
-                    :}| PROGRAM {: parser.printLog("seccion_sentencias ::= PROGRAM"); :};
 
 bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
                    parser.printLog("bloque_sentencias ::= bloque_sentencias sentencia");
@@ -173,10 +165,6 @@ asignacion ::= lvalue:lv ASIG expresionOr:e {:
               | lvalue:lv ASIG CORCH_A CORCH_C {:
                 parser.printLog("asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
                 RESULT = lv + " = []";
-              :}
-              | lvalue:lv ASIG CTE_ARREGLO:a {:
-                parser.printLog("asignacion ::= lvalue ASIG CTE_ARREGLO");
-                RESULT = lv + " = " + a;
               :};
 
 lvalue ::= ID:id {:
@@ -220,22 +208,12 @@ sentencia_control ::= BREAK    {:
                     parser.printLog("sentencia_control ::= CONTINUE");
                     RESULT = "CONTINUE"; :};
 
-sentencia_if ::= IF expresionOr:c  bloque:b elif_part:el else_part:es
-               {:
-                  parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es;
-               :}
-               | IF expresionOr:c bloque:b elif_part:el else_part:es
+sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es
                {:
                   parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
                   RESULT = "IF" + c + " {\n" + b + "\n}" + el + es; :};
 
-sentencia_while ::= WHILE  expresionOr:c  bloque:b alt_while_part:aw
-                  {:
-                     parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
-                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw;
-                  :}
-                  | WHILE expresionOr:c bloque:b alt_while_part:aw
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw
                   {:
                      parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
                      RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw; :};
