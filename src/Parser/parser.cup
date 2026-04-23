@@ -88,6 +88,10 @@ seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
                     {:
                         parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
                         RESULT = bs;
+                    :}
+                    | PROGRAM {:
+                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
+                        RESULT = "";
                     :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
