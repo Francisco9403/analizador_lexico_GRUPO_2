@@ -1,0 +1,398 @@
+package Parser;
+import java.util.*;
+import java_cup.runtime.*;
+import Exception.SyntaxException;
+import java.util.ArrayList;
+import Lexer.Lexer;
+import TablaSimbolo.TablaSimbolo;
+class Parser;
+
+parser code {:
+    TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
+    private java.util.List<String> listaLogs = new java.util.ArrayList<>();
+    public void printLog(String regla) {
+        listaLogs.add("[PARSER LOG] " + regla);
+
+        System.out.println("[PARSER LOG] " + regla);
+    }
+
+    public java.util.List<String> getLogs() {
+        return listaLogs;
+    }
+
+    public void syntax_error(Symbol s){
+        // Esto solo imprime un aviso temporal en consola
+        System.out.println("Aviso: Error sintáctico cerca de la línea " + (s.left + 1));
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{
+        // Construimos el mensaje y LANZAMOS la excepción
+        String mensaje = "Error en la linea " + (s.left + 1) + " Columna " + s.right + ". Valor simbolo '" + s.value + "' no esperado.";
+
+        // Lanzamos la excepción directamente
+        throw new SyntaxException(mensaje);
+    }
+:};
+
+terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
+terminal PROGRAM, DECLARE;
+terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
+terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
+terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
+terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
+terminal ASIG, AND, OR, NOT;
+terminal PAR_A, PAR_C, CORCH_A, CORCH_C, COMA, DOS_PUNTOS;
+terminal V_INDENT, V_DEDENT, SUMA_ACUM;
+terminal UMENOS;
+
+
+/* --- DECLARACION DE NO TERMINALES --- */
+nonterminal String program;
+nonterminal String tipo;
+nonterminal String seccion_declaracion, bloque_declaraciones, declaracion;
+nonterminal ArrayList<String> lista_ids;
+nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
+nonterminal String asignacion, impresion;
+nonterminal String sentencia_if, sentencia_while;
+nonterminal String expresion, lista_expresiones;
+
+nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
+nonterminal String comparacion, valorLiteral, lvalue;
+nonterminal String sentencia_control, bloque, lista_sentencias;
+nonterminal String alt_while_part, elif_part, else_part;
+start with program;
+
+/* --------------------------------------------------------
+   1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
+   -------------------------------------------------------- */
+program ::= seccion_declaracion:bd seccion_sentencias:bs
+            {:
+            parser.printLog("program ::= seccion_declaracion seccion_sentencias");
+            RESULT = bd + "\n" + bs; :}
+            | seccion_sentencias:bs
+            {:
+             parser.printLog("program ::= seccion_sentencias");
+             RESULT= bs; :}
+            ;
+
+/* --------------------------------------------------------
+   2. ZONA DE DECLARACION DE VARIABLES
+   -------------------------------------------------------- */
+seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones:bd V_DEDENT
+                    {:
+                        parser.printLog("seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones V_DEDENT");
+                        RESULT = bd;
+                    :}
+                    | DECLARE {:
+                        parser.printLog("seccion_declaracion ::= DECLARE (Seccion vacia)");
+                        RESULT = "";
+                    :};
+
+seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
+                    {:
+                        parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
+                        RESULT = bs;
+                    :}
+                    | PROGRAM {:
+                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
+                        RESULT = "";
+                    :};
+
+bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
+                        parser.printLog("bloque_declaraciones ::= bloque_declaraciones declaracion");
+                        RESULT = bd + "\n" + d;
+                      :}| declaracion:d {:
+                        parser.printLog("bloque_declaraciones ::= declaracion");
+                        RESULT = d;
+                       :} ;
+
+declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
+            // Recorremos la lista y seteamos el tipo en la tabla
+            for (String id : l) {
+                tablaSimbolos.setType(id, t);
+            }
+            parser.printLog("declaracion ::= tipo DOS_PUNTOS lista_ids");
+            RESULT = t + " : " + l.toString();
+        :};
+
+lista_ids ::= lista_ids:l COMA ID:id {:
+            parser.printLog("lista_ids ::= lista_ids COMA ID");
+            l.add(id);
+            RESULT = l;
+        :}
+        | ID:id {:
+            parser.printLog("lista_ids ::= ID");
+            ArrayList<String> lista = new ArrayList<>();
+            lista.add(id);
+            RESULT = lista;
+        :};
+
+tipo ::= TYPE_INT    {: parser.printLog("tipo ::= TYPE_INT"); RESULT = "INT"; :}
+       | TYPE_FLOAT  {: parser.printLog("tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
+       | TYPE_BOOL   {: parser.printLog("tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
+       | TYPE_ARRAY  {: parser.printLog("tipo ::= TYPE_ARRAY"); RESULT = "FLOAT_ARRAY"; :}
+       ;
+
+/* --------------------------------------------------------
+   3. ZONA DE SENTENCIAS (Cuerpo del programa)
+   -------------------------------------------------------- */
+
+bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
+                   parser.printLog("bloque_sentencias ::= bloque_sentencias sentencia");
+                   RESULT = bs + "\n" + s;
+                   :}| sentencia:s {:
+                   parser.printLog("bloque_sentencias ::= sentencia");
+                   RESULT = s;
+                    :};
+
+sentencia ::= asignacion:a{:
+            parser.printLog("sentencia ::= asignacion");
+            RESULT= a;
+          :}| impresion:i {:
+            parser.printLog("sentencia ::= impresion");
+            RESULT= i;
+          :}| sentencia_if:si {:
+            parser.printLog("sentencia ::= sentencia_if");
+            RESULT= si;
+          :}| sentencia_while:sw{:
+            parser.printLog("sentencia ::= sentencia_while");
+            RESULT= sw;
+          :}| sentencia_control:sc{:
+            parser.printLog("sentencia ::= sentencia_control");
+            RESULT= sc;
+          :};
+
+asignacion ::= lvalue:lv ASIG expresionOr:e {:
+                parser.printLog("asignacion ::= lvalue ASIG expresionOr");
+                RESULT = lv + " = " + e;
+              :}
+              | lvalue:lv ASIG CORCH_A lista_expresiones:le CORCH_C {:
+                parser.printLog("asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
+                RESULT = lv + " = [" + le + "]";
+              :}
+              | lvalue:lv ASIG CORCH_A CORCH_C {:
+                parser.printLog("asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
+                RESULT = lv + " = []";
+              :};
+
+lvalue ::= ID:id {:
+           parser.printLog("lvalue ::= ID");
+           RESULT = id; :}
+         | ID:id CORCH_A expresionOr:index CORCH_C {:
+           parser.printLog("lvalue ::= ID CORCH_A expresionOr CORCH_C");
+           RESULT = id + "[" + index + "]"; :}
+         ;
+
+impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
+                parser.printLog("impresion ::= PRINT PAR_A expresionOr PAR_C");
+                RESULT = "PRINT(" + e + ")";
+              :}
+            | PRINT PAR_A CTE_STR:s COMA expresionOr:e PAR_C {:
+                parser.printLog("impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
+                RESULT = "PRINT(\"" + s + "\", " + e + ")";
+              :}
+            | PRINT PAR_A CTE_STR:s PAR_C {:
+                parser.printLog("impresion ::= PRINT PAR_A CTE_STR PAR_C");
+                RESULT = "PRINT(\"" + s + "\")";
+              :};
+
+bloque ::= V_INDENT lista_sentencias:ls V_DEDENT{:
+                  parser.printLog("bloque ::= V_INDENT lista_sentencias V_DEDENT");
+                  RESULT = ls;
+                  :};
+
+lista_sentencias ::= lista_sentencias:ls sentencia:s{:
+                  parser.printLog("lista_sentencias ::= lista_sentencias sentencia");
+                  RESULT= ls + "\n" + s;:}
+                  | sentencia:s {:
+                  parser.printLog("lista_sentencias ::= sentencia");
+                  RESULT = s;:}
+                  ;
+
+sentencia_control ::= BREAK    {:
+                    parser.printLog("sentencia_control ::= BREAK");
+                    RESULT = "BREAK";    :}
+                    | CONTINUE {:
+                    parser.printLog("sentencia_control ::= CONTINUE");
+                    RESULT = "CONTINUE"; :};
+
+sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es
+               {:
+                  parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
+                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es; :};
+
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw
+                  {:
+                     parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
+                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw; :};
+
+elif_part ::= elif_part:el ELIF expresionOr:c bloque:b
+            {:
+               parser.printLog("elif_part ::= elif_part ELIF expresionOr bloque");
+               RESULT = el + "\nELIF" + c + " {\n" + b + "\n}"; :}
+            | /* vacio */
+            {:
+               parser.printLog("elif_part ::= (vacio)");
+               RESULT = ""; :}
+            ;
+
+else_part ::= ELSE bloque:b
+            {:
+               parser.printLog("else_part ::= ELSE bloque");
+               RESULT = "\nELSE {\n" + b + "\n}"; :}
+            | /* vacio */
+            {:
+               parser.printLog("else_part ::= (vacio)");
+               RESULT = ""; :}
+            ;
+
+alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b
+                 {:
+                    parser.printLog("alt_while_part ::= alt_while_part ALT_WHILE (expresionOr) bloque");
+                    RESULT = aw + "\nALT_WHILE(" + c + ") {\n" + b + "\n}"; :}
+                 | /* vacio */
+                 {:
+                    parser.printLog("alt_while_part ::= (vacio)");
+                    RESULT = ""; :}
+                 ;
+/* --------------------------------------------------------
+   4. EXPRESIONES Y MATEMATICAS
+   -------------------------------------------------------- */
+
+expresionOr::= expresionAnd:ea OR expresionOr:eo {:
+              parser.printLog("expresionOr ::= expresionAnd OR expresionOr");
+              RESULT = ea + " || " + eo; :}
+            | expresionAnd:ea {:
+              parser.printLog("expresionOr ::= expresionAnd");
+              RESULT = ea; :}
+            ;
+
+expresionAnd::= expresionNot:en AND expresionAnd:ea {:
+              parser.printLog("expresionAnd ::= expresionNot AND expresionAnd");
+              RESULT = en + " && " + ea; :}
+            | expresionNot:en {:
+              parser.printLog("expresionAnd ::= expresionNot");
+              RESULT = en; :}
+            ;
+
+expresionNot ::= NOT expresionNot:en {:
+               parser.printLog("expresionNot ::= NOT expresionNot");
+               RESULT = "!" + en; :}
+             | comparacion:c {:
+               parser.printLog("expresionNot ::= comparacion");
+               RESULT= c; :}
+             ;
+
+expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {:
+                parser.printLog("expresionSumRes ::= expresionSumRes OP_SUMA expresionMultDiv");
+                RESULT = es + " + " + em; :}
+                | expresionSumRes:es OP_RESTA expresionMultDiv:em {:
+                parser.printLog("expresionSumRes ::= expresionSumRes OP_RESTA expresionMultDiv");
+                RESULT = es + " - " + em; :}
+                | expresionMultDiv:em {:
+                parser.printLog("expresionSumRes ::= expresionMultDiv");
+                RESULT = em; :}
+                ;
+
+expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {:
+                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_MULT expresionMenosU");
+                 RESULT = em + " * " + emu; :}
+                 | expresionMultDiv:em OP_DIV expresionMenosU:emu {:
+                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_DIV expresionMenosU");
+                 RESULT = em + " / " + emu; :}
+                 | expresionMenosU:emu {:
+                 parser.printLog("expresionMultDiv ::= expresionMenosU");
+                 RESULT = emu; :}
+                 ;
+
+comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
+              RESULT = es1 + " == " + es2; :}
+              | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
+              RESULT = es1 + " != " + es2; :}
+              | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
+              RESULT = es1 + " > " + es2; :}
+              | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
+              RESULT = es1 + " < " + es2; :}
+              | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
+              RESULT = es1 + " >= " + es2; :}
+              | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {:
+              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
+              RESULT = es1 + " <= " + es2; :}
+              | expresionSumRes:es {:
+              parser.printLog("comparacion ::= expresionSumRes");
+              RESULT = es; :}
+              ;
+
+
+expresionMenosU ::= OP_RESTA expresion:e {:
+                parser.printLog("expresionMenosU ::= OP_RESTA expresion");
+                RESULT = "-" + e; :} %prec UMENOS
+                | expresion:e {:
+                parser.printLog("expresionMenosU ::= expresion");
+                RESULT = e; :}
+                ;
+
+/* --- Dentro de la sección de EXPRESIONES --- */
+expresion ::= PAR_A expresionOr:e PAR_C {:
+            parser.printLog("expresion ::= PAR_A expresionOr PAR_C");
+            RESULT = "(" + e + ")"; :}
+            | ID:id {:
+            parser.printLog("expresion ::= ID");
+            RESULT = id; :}
+            | valorLiteral:vl {:
+            parser.printLog("expresion ::= valorLiteral");
+            RESULT = vl; :}
+            | ID:id CORCH_A expresionOr:index CORCH_C {:
+            parser.printLog("expresion ::= ID CORCH_A expresionOr CORCH_C");
+            RESULT = id + "[" + index + "]"; :}
+            | READ_INT PAR_A PAR_C   {:
+            parser.printLog("expresion ::= READ_INT PAR_A PAR_C");
+            RESULT = "READ_INT()";   :}
+            | READ_FLOAT PAR_A PAR_C {:
+            parser.printLog("expresion ::= READ_FLOAT PAR_A PAR_C");
+            RESULT = "READ_FLOAT()"; :}
+            | READ_BOOL PAR_A PAR_C  {:
+            parser.printLog("expresion ::= READ_BOOL PAR_A PAR_C");
+            RESULT = "READ_BOOL()";  :}
+            | sum_acum:sm {:
+            parser.printLog("expresion ::= sum_acum");
+            RESULT = sm; :}
+            ;
+
+
+/* --- Dentro de la sección de valorLiteral --- */
+valorLiteral ::= CTE_INT:n    {: parser.printLog("valorLiteral ::= CTE_INT"); RESULT = n; :}
+              | CTE_FLOAT:f  {: parser.printLog("valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
+              | CONST_BOOL:b {: parser.printLog("valorLiteral ::= CONST_BOOL"); RESULT = b; :}
+              | CTE_ARREGLO:a {: parser.printLog("valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
+              ;
+
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C
+            {:
+              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A lista_expresiones CORCH_C PAR_C");
+              RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C
+            {:
+              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A CORCH_C PAR_C");
+              RESULT = "suma_cumulativa(" + e + ", [])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C
+            {:
+              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C");
+              RESULT = "suma_cumulativa(" + e + ", " + le + ")"; :};
+
+/* --------------------------------------------------------
+   5. ARREGLOS Y LISTAS
+   -------------------------------------------------------- */
+
+lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {:
+                    parser.printLog("lista_expresiones ::= lista_expresiones COMA expresionOr");
+                    RESULT = li + ", " + e; :}
+                    | expresionOr:e {:
+                    parser.printLog("lista_expresiones ::= expresionOr");
+                    RESULT = e; :};

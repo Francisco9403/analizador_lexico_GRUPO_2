@@ -1,6 +1,7 @@
 /target/
-/src/Lexer.java
+/src/Lexer/Lexer.java
 /src/Lexer.java~
 .vscode/
 .idea/
 *.class
+/old-comp-files/

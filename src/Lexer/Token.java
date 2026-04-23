@@ -1,3 +1,5 @@
+package Lexer;
+
 /**
  * Representa un token producido por el analizador léxico.
  */
