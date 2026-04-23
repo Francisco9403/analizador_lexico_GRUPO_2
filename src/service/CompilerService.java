@@ -8,6 +8,7 @@ import java.util.List;
 import Lexer.Token;
 import Exception.SyntaxException;
 import java_cup.runtime.Symbol;
+
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
  */
@@ -27,13 +28,21 @@ public class CompilerService {
             out.append("\n=== ANALISIS SINTACTICO ===\n");
             CupScannerAdapter scanner = new CupScannerAdapter(tokens);
             Parser parser = new Parser(scanner);
-            Symbol result = parser.parse();
+            Symbol result = parser.parse(); // Acá arranca el análisis
+
+            generarArchivoLogs(parser.getLogs());
+
             if (result != null && result.value != null) {
                 out.append("Resultado: ").append(result.value).append('\n');
             }
             out.append("\nCompilacion finalizada sin errores.\n");
+
             Lexer.tablaSimbolos.generateFile();
             out.append("\nTabla de símbolos generada en ts.txt\n");
+
+            // Avisamos en la GUI que también se generaron los logs
+            out.append("Logs de reducción generados en logs_sintacticos.txt\n");
+
         } catch (SyntaxException e) {
             out.append("\n[ERROR SINTACTICO] ").append(e.getMessage()).append('\n');
         } catch (Exception e) {
@@ -53,5 +62,22 @@ public class CompilerService {
         }
         return tokens;
     }
-}
 
+    private void generarArchivoLogs(List<String> logs) {
+        // Validación de seguridad por si la lista viene nula o vacía
+        if (logs == null || logs.isEmpty()) {
+            System.err.println("No hay logs sintácticos para guardar.");
+            return;
+        }
+
+        try (java.io.PrintWriter writer = new java.io.PrintWriter(new java.io.FileWriter("logs_sintacticos.txt"))) {
+            writer.println("=== LOGS DE REDUCCION (ANALIZADOR SINTACTICO) ===");
+            writer.println("Total de reglas aplicadas: " + logs.size() + "\n");
+            for (String log : logs) {
+                writer.println(log);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al guardar el archivo de logs: " + e.getMessage());
+        }
+    }
+}

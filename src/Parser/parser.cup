@@ -9,10 +9,15 @@ class Parser;
 
 parser code {:
     TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
+    private java.util.List<String> listaLogs = new java.util.ArrayList<>();
+    public void printLog(String regla) {
+        listaLogs.add("[PARSER LOG] " + regla);
 
-    // Método de log solicitado
-    public void printLog(String mensaje) {
-        System.out.println("[PARSER LOG] " + mensaje);
+        System.out.println("[PARSER LOG] " + regla);
+    }
+
+    public java.util.List<String> getLogs() {
+        return listaLogs;
     }
 
     public void syntax_error(Symbol s){
