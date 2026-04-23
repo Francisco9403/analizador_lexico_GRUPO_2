@@ -68,6 +68,14 @@ src/
 
 ---
 
+## Ejecutar el proyecto
+
+Para ejecutar el proyecto, seguí estos pasos:
+
+1. Asegurate de tener Java 21 o superior instalado en tu sistema.
+2. accede al siguiente path: `compiladores-2026-grupo-2\out\artifacts\compilador_jar` y ejecutá el archivo `compilador.jar` haciendo doble clic o desde la terminal con el comando:
+   java -jar compilador.jar
+
 ## Uso de la Interfaz Gráfica (GUI)
 
 La aplicación cuenta con un entorno visual diseñado para facilitar la escritura, prueba y depuración de código en nuestro lenguaje.
