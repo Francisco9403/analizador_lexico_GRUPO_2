@@ -28,7 +28,7 @@ import javax.swing.text.BadLocationException;
 
 public class CompilerFrame extends JFrame {
 
-    private static final Path DEFAULT_INPUT_PATH = Path.of("src", "test/input_1.txt");
+    private static final Path DEFAULT_INPUT_PATH = Path.of("src", "test/pruebas.txt");
 
     private final JTextArea sourceArea;
     private final JTextArea outputArea;
@@ -120,7 +120,7 @@ public class CompilerFrame extends JFrame {
         try {
             sourceArea.setText(Files.readString(DEFAULT_INPUT_PATH, StandardCharsets.UTF_8));
         } catch (IOException ex) {
-            outputArea.setText("No se pudo cargar src/input_1.txt: " + ex.getMessage());
+            outputArea.setText("No se pudo cargar src/pruebas.txt: " + ex.getMessage());
         }
         sourceArea.setCaretPosition(0);
         updateCursorStatus();

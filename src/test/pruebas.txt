@@ -1,6 +1,6 @@
 DECLARE
     integer: contador_items, capacidad_maxima, items_rechazados, prioridad
-    float: peso_total, peso_limite, promedio_peso, volumen_paquete
+    float: peso_total, peso_limite, promedio_peso, volumen_paquete, peso_float
     boolean: sistema_activo, error_sensor, es_urgente
     float_array: registros_pesado
 
@@ -12,6 +12,16 @@ PROGRAM
     peso_limite = 500.50
     sistema_activo = true
     error_sensor = false
+
+    % 1.1 Prueba de arreglos con indice entero
+    registros_pesado = [1.0,2.0,0.]
+    peso_total = registros_pesado[1]
+
+    {*
+      Prueba negativa de indice no entero en arreglo.
+      Se deja comentada para no romper este caso de prueba principal.
+      peso_float = registros_pesado[2.0]
+    *}
 
     % 2. Bucle Principal con Lógica de Control (WHILE + CONTINUE + BREAK)
     WHILE (contador_items < capacidad_maxima) && sistema_activo
@@ -38,6 +48,31 @@ PROGRAM
             CONTINUE
 
         contador_items = contador_items + 1
+
+    {*
+      2.1 Test dedicado de CONTINUE.
+      Esperado: se salta cuando contador_items == 3,
+      por lo tanto items_rechazados termina en 4.
+    *}
+    contador_items = 0
+    items_rechazados = 0
+    WHILE contador_items < 5
+        contador_items = contador_items + 1
+        IF contador_items == 3
+            CONTINUE
+        items_rechazados = items_rechazados + 1
+    PRINT("CONTINUE esperado -> items_rechazados = 4:", items_rechazados)
+
+    {*
+      2.2 Test dedicado de BREAK.
+      Esperado: el ciclo termina al llegar prioridad == 4.
+    *}
+    prioridad = 0
+    WHILE prioridad < 10
+        prioridad = prioridad + 1
+        IF prioridad == 4
+            BREAK
+    PRINT("BREAK esperado -> prioridad = 4:", prioridad)
 
     % 3. Estructuras de decisión con ELIF y ELSE (Lógica booleana)
     IF (peso_total > 400.0) && !error_sensor

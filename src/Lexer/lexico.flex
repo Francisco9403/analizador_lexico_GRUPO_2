@@ -22,12 +22,15 @@ import TablaSimbolo.TablaSimbolo;
     int string_yyline = 0;
     int string_yycolumn = 0;
 
-    /* Métodos auxiliares para crear tokens con posición correcta */
+    private String ultimoTokenSignificativo = null;
+
     private Token token(String nombre) {
+        ultimoTokenSignificativo = nombre;
         return new Token(nombre, this.yyline + 1, this.yycolumn + 1);
     }
 
     private Token token(String nombre, Object valor) {
+        ultimoTokenSignificativo = nombre;
         return new Token(nombre, this.yyline + 1, this.yycolumn + 1, valor);
     }
 
@@ -124,13 +127,13 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "BREAK"              { return token("BREAK", yytext()); }
   "CONTINUE"           { return token("CONTINUE", yytext()); }
   "PRINT"              { return token("PRINT", yytext()); }
-  
+
   /* Tipos de Datos */
   "integer"            { return token("TYPE_INT", yytext()); }
   "float"              { return token("TYPE_FLOAT", yytext()); }
   "boolean"            { return token("TYPE_BOOL", yytext()); }
   "float_array"        { return token("TYPE_ARRAY", yytext()); }
-  
+
   /* Lectura */
   "READ_INT"           { return token("READ_INT", yytext()); }
   "READ_FLOAT"         { return token("READ_FLOAT", yytext()); }
@@ -185,11 +188,17 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
    /* Puntuación y Delimitadores */
    "("                  { return token("PAR_A", yytext()); }
    ")"                  { return token("PAR_C", yytext()); }
-   "["                  { string.setLength(0);
-                          string_yyline = this.yyline;
-                          string_yycolumn = this.yycolumn;
-                          string.append("[");
-                          yybegin(ARREGLO); }
+   "["                  {
+                          if ("ASIG".equals(ultimoTokenSignificativo) || "COMA".equals(ultimoTokenSignificativo)) {
+                              string.setLength(0);
+                              string_yyline = this.yyline;
+                              string_yycolumn = this.yycolumn;
+                              string.append("[");
+                              yybegin(ARREGLO);
+                          } else {
+                              return token("CORCH_A", yytext());
+                          }
+                        }
    "]"                  { return token("CORCH_C", yytext()); }
    ","                  { return token("COMA", yytext()); }
    ":"                  { return token("DOS_PUNTOS", yytext()); }

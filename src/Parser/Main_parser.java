@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class Main_parser {
     public static void main(String[] args) throws Exception {
-        String path = "./src/input_1.txt";
+        String path = "./src/pruebas.txt";
         System.out.println("Análisis sintáctico iniciado:");
         FileReader fileReader = new FileReader(path);
         Lexer lexer = new Lexer(fileReader);

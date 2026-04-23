@@ -39,7 +39,7 @@ src/
 │     └── CompilerService.java # Coordinador de las fases de compilación.
 ├── gui/
 │     └── Main_gui.java    # Interfaz gráfica de usuario.
-└── input_1.txt            # Archivo de prueba principal.
+└── pruebas.txt            # Archivo de prueba principal.
 
 ```
 
@@ -75,14 +75,14 @@ La aplicación cuenta con un entorno visual diseñado para facilitar la escritur
 ![img_1.png](img_1.png)
 ### Componentes de la Interfaz:
 
-1. **Editor de Código (Panel Izquierdo):** Área principal de trabajo con numeración de líneas. Aquí podés escribir tu código manualmente o cargar un archivo fuente existente (como `input_1.txt`).
+1. **Editor de Código (Panel Izquierdo):** Área principal de trabajo con numeración de líneas. Aquí podés escribir tu código manualmente o cargar un archivo fuente existente (como `pruebas.txt`).
 2. **Consola de Resultados (Panel Derecho):** Muestra la salida del proceso de compilación.
    - **Éxito:** Muestra la reconstrucción sintáctica limpia del programa.
    - **Error:** Muestra mensajes de error léxicos o sintácticos precisos, indicando la línea y columna exacta del fallo.
 3. **Botón de Compilación :** Es el gatillo del sistema. Ejecuta la cadena completa del compilador: primero el Analizador Léxico y luego el Sintáctico.
 4. **Botón de Guardar:** Guarda los cambios realizados en el editor de código, ideal para ir ajustando los casos de prueba sin salir de la aplicación.
 5. **Botón de Limpiar:** Borra el contenido de la consola de resultados y limpia el entorno para realizar una nueva ejecución desde cero, sin mezclar salidas anteriores.
-6. **Abrir/Cargar Archivo:** Permite explorar el sistema y cargar un archivo de código fuente (ej. `input_1.txt`) directamente en el editor izquierdo.
+6. **Abrir/Cargar Archivo:** Permite explorar el sistema y cargar un archivo de código fuente (ej. `pruebas.txt`) directamente en el editor izquierdo.
 
 ---
 ## Archivos Generados

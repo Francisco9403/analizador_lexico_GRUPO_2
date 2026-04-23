@@ -12,7 +12,7 @@ import java.util.Scanner;
 
 public class Main_lexer {
 
-    private static final String INPUT_FILE = "./src/input_1.txt";
+    private static final String INPUT_FILE = "./src/pruebas.txt";
 
     public static void main(String[] args) {
 
