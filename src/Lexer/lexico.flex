@@ -118,7 +118,6 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
   /* Palabras Reservadas */
   "PROGRAM"            { return token("PROGRAM", yytext()); }
-  "DECLARE"            { return token("DECLARE", yytext()); }
   "IF"                 { return token("IF", yytext()); }
   "ELIF"               { return token("ELIF", yytext()); }
   "ELSE"               { return token("ELSE", yytext()); }

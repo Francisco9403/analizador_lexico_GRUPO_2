@@ -35,7 +35,7 @@ parser code {:
 :};
 
 terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
-terminal PROGRAM, DECLARE;
+terminal PROGRAM;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
 terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
@@ -50,7 +50,7 @@ terminal UMENOS;
 /* --- DECLARACION DE NO TERMINALES --- */
 nonterminal String program;
 nonterminal String tipo;
-nonterminal String seccion_declaracion, bloque_declaraciones, declaracion;
+nonterminal String bloque_declaraciones, declaracion;
 nonterminal ArrayList<String> lista_ids;
 nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
 nonterminal String asignacion, impresion;
@@ -66,9 +66,9 @@ start with program;
 /* --------------------------------------------------------
    1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
    -------------------------------------------------------- */
-program ::= seccion_declaracion:bd seccion_sentencias:bs
+program ::= bloque_declaraciones:bd seccion_sentencias:bs
             {:
-            parser.printLog("program ::= seccion_declaracion seccion_sentencias");
+            parser.printLog("program ::= bloque_declaraciones seccion_sentencias");
             RESULT = bd + "\n" + bs; :}
             | seccion_sentencias:bs
             {:
@@ -79,15 +79,6 @@ program ::= seccion_declaracion:bd seccion_sentencias:bs
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones:bd V_DEDENT
-                    {:
-                        parser.printLog("seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones V_DEDENT");
-                        RESULT = bd;
-                    :}
-                    | DECLARE {:
-                        parser.printLog("seccion_declaracion ::= DECLARE (Seccion vacia)");
-                        RESULT = "";
-                    :};
 
 seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
                     {:

@@ -31,7 +31,6 @@ public class CupScannerAdapter implements Scanner {
         return switch (token.nombre) {
             // Estructura y bloques
             case "PROGRAM" -> new Symbol(ParserSym.PROGRAM, left, right, token.valor);
-            case "DECLARE" -> new Symbol(ParserSym.DECLARE, left, right, token.valor);
 
             // Control de flujo
             case "IF" -> new Symbol(ParserSym.IF, left, right, token.valor);

@@ -1,8 +1,7 @@
-DECLARE
-    integer: num1, num2, counter, index
-    float: decimal1, decimal2, result_float
-    boolean: flag1, flag2
-    float_array: large_array
+integer: num1, num2, counter, index
+float: decimal1, decimal2, result_float
+boolean: flag1, flag2
+float_array: large_array
 
 PROGRAM
     num1 = 10
