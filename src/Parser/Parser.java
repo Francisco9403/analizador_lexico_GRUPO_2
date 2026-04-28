@@ -461,11 +461,14 @@ public class Parser extends java_cup.runtime.lr_parser {
 
 
     TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
+    private int reglaCount = 1; // Contador secuencial
     private java.util.List<String> listaLogs = new java.util.ArrayList<>();
-    public void printLog(String regla) {
-        listaLogs.add("[PARSER LOG] " + regla);
 
-        System.out.println("[PARSER LOG] " + regla);
+    public void printLog(String regla) {
+        // Formateamos con el número de paso (ej: 001. Regla: ...)
+        String mensaje = String.format("%03d. Regla aplicada: %s", reglaCount++, regla);
+        listaLogs.add(mensaje);
+        System.out.println(mensaje);
     }
 
     public java.util.List<String> getLogs() {

@@ -9,6 +9,7 @@ import TablaSimbolo.TablaSimbolo;
 %public
 %class Lexer
 %unicode
+%ignorecase
 %type Token
 %line
 %column

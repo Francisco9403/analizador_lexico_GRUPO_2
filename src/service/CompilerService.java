@@ -28,20 +28,18 @@ public class CompilerService {
             out.append("\n=== ANALISIS SINTACTICO ===\n");
             CupScannerAdapter scanner = new CupScannerAdapter(tokens);
             Parser parser = new Parser(scanner);
-            Symbol result = parser.parse(); // Acá arranca el análisis
+            parser.parse();
 
-            generarArchivoLogs(parser.getLogs());
-
-            if (result != null && result.value != null) {
-                out.append("Resultado: ").append(result.value).append('\n');
+            out.append("\n=== ACCIONES SEMÁNTICAS (ORDEN DE REDUCCIÓN) ===\n");
+            List<String> logs = parser.getLogs();
+            for (String log : logs) {
+                out.append(log).append("\n");
             }
-            out.append("\nCompilacion finalizada sin errores.\n");
 
-            Lexer.tablaSimbolos.generateFile();
-            out.append("\nTabla de símbolos generada en ts.txt\n");
+            java.nio.file.Files.write(java.nio.file.Path.of("logs_reglas.txt"), logs);
 
-            // Avisamos en la GUI que también se generaron los logs
-            out.append("Logs de reducción generados en logs_sintacticos.txt\n");
+            out.append("\n[OK] Logs guardados en logs_reglas.txt\n");
+            out.append("Compilación finalizada sin errores.\n");
 
         } catch (SyntaxException e) {
             out.append("\n[ERROR SINTACTICO] ").append(e.getMessage()).append('\n');
