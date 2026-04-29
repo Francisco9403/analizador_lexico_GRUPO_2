@@ -28,7 +28,7 @@ public class CompilerService {
             out.append("\n=== ANALISIS SINTACTICO ===\n");
             CupScannerAdapter scanner = new CupScannerAdapter(tokens);
             Parser parser = new Parser(scanner);
-            parser.parse();
+            Symbol result = parser.parse();
 
             out.append("\n=== ACCIONES SEMÁNTICAS (ORDEN DE REDUCCIÓN) ===\n");
             List<String> logs = parser.getLogs();
@@ -39,6 +39,8 @@ public class CompilerService {
             java.nio.file.Files.write(java.nio.file.Path.of("logs_reglas.txt"), logs);
 
             out.append("\n[OK] Logs guardados en logs_reglas.txt\n");
+            parser.tablaSimbolos.generateFile();
+            out.append("\nTabla de símbolos generada en ts.txt\n");
             out.append("Compilación finalizada sin errores.\n");
 
         } catch (SyntaxException e) {

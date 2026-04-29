@@ -1,5 +1,4 @@
 package Lexer;
-import TablaSimbolo.TablaSimbolo;
 
 /**
  * Analizador Léxico para el TPI - Grupo 2
@@ -16,7 +15,6 @@ import TablaSimbolo.TablaSimbolo;
 
 %{
 
-    public static TablaSimbolo tablaSimbolos = new TablaSimbolo();
 
     /* Variables para strings y comentarios */
     StringBuffer string = new StringBuffer();
@@ -147,21 +145,15 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "suma_cumulativa"    { return token("SUMA_ACUM", yytext()); }
 
   /* Identificadores y Números*/
-
 {Identifier} {
-    // Agregamos el ID a la tabla. Por ahora sin tipo (se lo dará el Parser)
-    tablaSimbolos.addId(yytext(), "ID");
     return token("ID", yytext());
 }
 
 {DecIntegerLiteral} {
-    // Las constantes se agregan con su valor y longitud
-    tablaSimbolos.addConstant("_" + yytext(), "CTE_INT", yytext(), String.valueOf(yytext().length()));
     return token("CTE_INT", yytext());
 }
 
 {FloatLiteral} {
-    tablaSimbolos.addConstant("_" + yytext(), "CTE_FLOAT", yytext(), String.valueOf(yytext().length()));
     return token("CTE_FLOAT", yytext());
 }
 
@@ -228,7 +220,6 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "]"                  {
                            yybegin(YYINITIAL);
                            String arreglo = string.append("]").toString();
-                           tablaSimbolos.addConstant("_" + arreglo, "CTE_ARREGLO", arreglo, String.valueOf(arreglo.length()));
                            return token("CTE_ARREGLO", arreglo);
                        }
   [^]                  { string.append(yytext()); }
@@ -239,7 +230,6 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   \"                   {
                            yybegin(YYINITIAL);
                            String cadena = string.toString();
-                           tablaSimbolos.addConstant("_" + cadena, "CTE_STR", cadena, String.valueOf(cadena.length()));
                            return token("CTE_STR", cadena);
                        }
   "\\\""               { string.append("\""); }

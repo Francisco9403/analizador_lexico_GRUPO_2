@@ -8,7 +8,8 @@ import TablaSimbolo.TablaSimbolo;
 class Parser;
 
 parser code {:
-    TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
+    public static TablaSimbolo tablaSimbolos = new TablaSimbolo();
+
     private int reglaCount = 1; // Contador secuencial
     private java.util.List<String> listaLogs = new java.util.ArrayList<>();
 
@@ -52,7 +53,7 @@ terminal UMENOS;
 
 /* --- DECLARACION DE NO TERMINALES --- */
 nonterminal String program;
-nonterminal String tipo;
+nonterminal String tipo, cte_string;
 nonterminal String bloque_declaraciones, declaracion;
 nonterminal ArrayList<String> lista_ids;
 nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
@@ -102,12 +103,15 @@ bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
                        :} ;
 
 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
-            // Recorremos la lista y seteamos el tipo en la tabla
-            for (String id : l) {
-                tablaSimbolos.setType(id, t);
-            }
-            parser.printLog("declaracion ::= tipo DOS_PUNTOS lista_ids");
-            RESULT = t + " : " + l.toString();
+            for(String id : l) {
+                    if (!tablaSimbolos.exists(id)) {
+                        tablaSimbolos.addId(id, "ID");
+                        tablaSimbolos.setType(id, t);
+                        parser.printLog("Variable declarada: " + id + " de tipo " + t);
+                    } else {
+                        System.err.println("Error semántico: " + id + " ya existe.");
+                    }
+                }
         :};
 
 lista_ids ::= lista_ids:l COMA ID:id {:
@@ -182,11 +186,11 @@ impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
                 parser.printLog("impresion ::= PRINT PAR_A expresionOr PAR_C");
                 RESULT = "PRINT(" + e + ")";
               :}
-            | PRINT PAR_A CTE_STR:s COMA expresionOr:e PAR_C {:
+            | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
                 parser.printLog("impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
                 RESULT = "PRINT(\"" + s + "\", " + e + ")";
               :}
-            | PRINT PAR_A CTE_STR:s PAR_C {:
+            | PRINT PAR_A cte_string:s PAR_C {:
                 parser.printLog("impresion ::= PRINT PAR_A CTE_STR PAR_C");
                 RESULT = "PRINT(\"" + s + "\")";
               :};
@@ -324,8 +328,8 @@ comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
               ;
 
 
-expresionMenosU ::= OP_RESTA expresion:e {:
-                parser.printLog("expresionMenosU ::= OP_RESTA expresion");
+expresionMenosU ::= OP_RESTA expresionMenosU:e {:
+                parser.printLog("expresionMenosU ::= OP_RESTA expresionMenosU");
                 RESULT = "-" + e; :} %prec UMENOS
                 | expresion:e {:
                 parser.printLog("expresionMenosU ::= expresion");
@@ -337,8 +341,10 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
             parser.printLog("expresion ::= PAR_A expresionOr PAR_C");
             RESULT = "(" + e + ")"; :}
             | ID:id {:
-            parser.printLog("expresion ::= ID");
-            RESULT = id; :}
+            if (!tablaSimbolos.exists(id)) {
+                    throw new Exception("Error semántico: La variable '" + id + "' no ha sido declarada.");
+                }
+                RESULT = id; :}
             | valorLiteral:vl {:
             parser.printLog("expresion ::= valorLiteral");
             RESULT = vl; :}
@@ -365,7 +371,13 @@ valorLiteral ::= CTE_INT:n    {: parser.printLog("valorLiteral ::= CTE_INT"); RE
               | CTE_FLOAT:f  {: parser.printLog("valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
               | CONST_BOOL:b {: parser.printLog("valorLiteral ::= CONST_BOOL"); RESULT = b; :}
               | CTE_ARREGLO:a {: parser.printLog("valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
+              | cte_string:s {: parser.printLog("valorLiteral ::= cte_string"); RESULT = a; :}
               ;
+
+cte_string ::= CTE_STR:s {:
+             Parser.tablaSimbolos.addConstant("_" + s, "CTE_STR", s, String.valueOf(s.length()));
+             RESULT = s;
+            :};
 
 sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C
             {:
