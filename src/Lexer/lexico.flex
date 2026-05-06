@@ -12,9 +12,12 @@ package Lexer;
 %type Token
 %line
 %column
+%state INDENTANDO
+%state CADENA
+%state COMENTARIO
+%state ARREGLO
 
 %{
-
 
     /* Variables para strings y comentarios */
     StringBuffer string = new StringBuffer();
@@ -64,7 +67,7 @@ package Lexer;
 
 /* Macros */
 LineTerminator = \r|\n|\r\n
-WhiteSpace     = [ \t\f]
+WhiteSpace     = \s+
 
 /* Letras Unicode para soportar tildes y eñes según el estándar */
 Letter         = [:letter:]
@@ -75,10 +78,6 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
 /* Formatos: 99.99 , 99. , .999 */
 FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
-%state INDENTANDO
-%state CADENA
-%state COMENTARIO
-%state ARREGLO
 
 %%
 <INDENTANDO> {
@@ -212,8 +211,8 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
 <COMENTARIO> {
   "*}"                 { yybegin(YYINITIAL); }
-  [^]                  { /* Ignorar contenido */ }
   <<EOF>>              { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
+  [^]                  { /* Ignorar contenido */ }
 }
 
 <ARREGLO> {
@@ -222,8 +221,8 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
                            String arreglo = string.append("]").toString();
                            return token("CTE_ARREGLO", arreglo);
                        }
-  [^]                  { string.append(yytext()); }
   <<EOF>>              { throw new Error("Error Léxico: Arreglo sin cerrar al final del archivo."); }
+  [^]                  { string.append(yytext()); }
 }
 
 <CADENA> {
@@ -236,8 +235,8 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "\\n"                { string.append("\n"); }
   "\\t"                { string.append("\t"); }
   "\\\\"               { string.append("\\"); }
-  [^]                  { string.append(yytext()); }
   <<EOF>>              { throw new Error("Error Léxico: Cadena sin cerrar al final del archivo."); }
+  [^]                  { string.append(yytext()); }
 }
 
 /* Fallback de errores */
