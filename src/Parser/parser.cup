@@ -41,7 +41,7 @@ parser code {:
 terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
 terminal PROGRAM;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
-terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
 terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
 terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
@@ -60,11 +60,11 @@ nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
 nonterminal String asignacion, impresion;
 nonterminal String sentencia_if, sentencia_while;
 nonterminal String expresion, lista_expresiones;
-
 nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
-nonterminal String comparacion, valorLiteral, lvalue;
+nonterminal String comparacion, valorLiteral, lvalue, arreglo_literal;
 nonterminal String sentencia_control, bloque, lista_sentencias;
 nonterminal String alt_while_part, elif_part, else_part;
+
 start with program;
 
 /* --------------------------------------------------------
@@ -88,7 +88,9 @@ seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT {:
                     | PROGRAM {:
                       parser.printLog("Regla 1.1.1 seccion_sentencias ::= PROGRAM (Seccion vacia)");
                       RESULT = ""; :}
-                    | /* vacio - Sin sentencias */
+                    | /* vacio - Sin sentencias */ {:
+                    parser.printLog("Regla 1.1.2 seccion_sentencias ::= ( Sin sección PROGRAM )");
+                    RESULT = ""; :}
                     ;
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
@@ -130,8 +132,9 @@ tipo ::= TYPE_INT {:
         parser.printLog("Regla 1.5.1 tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
        | TYPE_BOOL {:
         parser.printLog("Regla 1.5.2 tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
-       | TYPE_ARRAY {:
-        parser.printLog("Regla 1.5.3 tipo ::= TYPE_ARRAY"); RESULT = "FLOAT_ARRAY"; :}
+       | TYPE_ARRAY CORCH_A CTE_INT:size CORCH_C {:
+        parser.printLog("Regla 1.5.3 tipo ::= TYPE_ARRAY [ CTE_INT ]");
+        RESULT = "FLOAT_ARRAY[" + size + "]"; :}
        ;
 
 /* --------------------------------------------------------
@@ -166,14 +169,6 @@ sentencia ::= asignacion:a{:
 asignacion ::= lvalue:lv ASIG expresionOr:e {:
                 parser.printLog("Regla 2.2.0 asignacion ::= lvalue ASIG expresionOr");
                 RESULT = lv + " = " + e;
-              :}
-              | lvalue:lv ASIG CORCH_A lista_expresiones:le CORCH_C {:
-                parser.printLog("Regla 2.2.1 asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
-                RESULT = lv + " = [" + le + "]";
-              :}
-              | lvalue:lv ASIG CORCH_A CORCH_C {:
-                parser.printLog("Regla 2.2.2 asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
-                RESULT = lv + " = []";
               :};
 
 lvalue ::= ID:id {:
@@ -365,17 +360,23 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
 
 
 /* --- Dentro de la sección de valorLiteral --- */
-valorLiteral ::= CTE_INT:n
-              {: parser.printLog("Regla 3.8.0 valorLiteral ::= CTE_INT"); RESULT = n; :}
-              | CTE_FLOAT:f
-              {: parser.printLog("Regla 3.8.1 valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
-              | CONST_BOOL:b
-              {: parser.printLog("Regla 3.8.2 valorLiteral ::= CONST_BOOL"); RESULT = b; :}
-              | CTE_ARREGLO:a
-              {: parser.printLog("Regla 3.8.3 valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
-              | cte_string:s
-              {: parser.printLog("Regla 3.8.4 valorLiteral ::= cte_string"); RESULT = s; :}
+valorLiteral ::= CTE_INT:n {:
+              parser.printLog("Regla 3.8.0 valorLiteral ::= CTE_INT"); RESULT = n; :}
+              | CTE_FLOAT:f {:
+              parser.printLog("Regla 3.8.1 valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
+              | CONST_BOOL:b {:
+              parser.printLog("Regla 3.8.2 valorLiteral ::= CONST_BOOL"); RESULT = b; :}
+              | arreglo_literal:a {:
+              parser.printLog("Regla 3.8.3 valorLiteral ::= arreglo_literal"); RESULT = a; :}
+              | cte_string:s {:
+              parser.printLog("Regla 3.8.4 valorLiteral ::= cte_string"); RESULT = s; :}
               ;
+
+arreglo_literal ::= CORCH_A lista_expresiones:le CORCH_C
+                  {: RESULT = "[" + le + "]"; :}
+                | CORCH_A CORCH_C
+                  {: RESULT = "[]"; :}
+                ;
 
 cte_string ::= CTE_STR:s {:
              parser.printLog("Regla 3.9.0 cte_string ::= CTE_STR");
@@ -383,15 +384,9 @@ cte_string ::= CTE_STR:s {:
              RESULT = s;
             :};
 
-sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C {:
-            parser.printLog("Regla 3.10.0 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A lista_expresiones CORCH_C PAR_C");
-            RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C {:
-            parser.printLog("Regla 3.10.1 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A CORCH_C PAR_C");
-            RESULT = "suma_cumulativa(" + e + ", [])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C {:
-            parser.printLog("Regla 3.10.2 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C");
-            RESULT = "suma_cumulativa(" + e + ", " + le + ")";
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA expresionOr:array PAR_C {:
+            parser.printLog("Regla 3.10.0 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA expresionOr PAR_C");
+            RESULT = "suma_cumulativa(" + e + ", " + array + ")";
           :};
 
 /* --------------------------------------------------------

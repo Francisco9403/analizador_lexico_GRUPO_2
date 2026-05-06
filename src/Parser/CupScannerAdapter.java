@@ -2,7 +2,9 @@ package Parser;
 
 import Exception.SyntaxException;
 import Lexer.Token;
+
 import java.util.List;
+
 import java_cup.runtime.Scanner;
 import java_cup.runtime.Symbol;
 
@@ -54,7 +56,6 @@ public class CupScannerAdapter implements Scanner {
             case "READ_FLOAT" -> new Symbol(ParserSym.READ_FLOAT, left, right, token.valor);
             case "READ_BOOL" -> new Symbol(ParserSym.READ_BOOL, left, right, token.valor);
             case "CONST_BOOL" -> new Symbol(ParserSym.CONST_BOOL, left, right, token.valor);
-            case "CTE_ARREGLO" -> new Symbol(ParserSym.CTE_ARREGLO, left, right, token.valor);
             case "ID" -> new Symbol(ParserSym.ID, left, right, token.valor);
             case "CTE_INT" -> new Symbol(ParserSym.CTE_INT, left, right, token.valor);
             case "CTE_FLOAT" -> new Symbol(ParserSym.CTE_FLOAT, left, right, token.valor);
@@ -89,7 +90,7 @@ public class CupScannerAdapter implements Scanner {
 
             default -> throw new SyntaxException(
                     "Token no soportado por esta gramatica CUP: " + token.nombre +
-                    " en linea " + token.linea + ", columna " + token.columna);
+                            " en linea " + token.linea + ", columna " + token.columna);
         };
     }
 }

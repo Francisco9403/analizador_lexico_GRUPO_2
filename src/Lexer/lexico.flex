@@ -15,7 +15,6 @@ package Lexer;
 %state INDENTANDO
 %state CADENA
 %state COMENTARIO
-%state ARREGLO
 
 %{
 
@@ -67,7 +66,7 @@ package Lexer;
 
 /* Macros */
 LineTerminator = \r|\n|\r\n
-WhiteSpace     = \s+
+WhiteSpace = [ \t]+
 
 /* Letras Unicode para soportar tildes y eñes según el estándar */
 Letter         = [:letter:]
@@ -177,20 +176,10 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "!"                  { return token("NOT", yytext()); }
 
    /* Puntuación y Delimitadores */
-   "("                  { return token("PAR_A", yytext()); }
-   ")"                  { return token("PAR_C", yytext()); }
-   "["                  {
-                          if ("ASIG".equals(ultimoTokenSignificativo) || "COMA".equals(ultimoTokenSignificativo)) {
-                              string.setLength(0);
-                              string_yyline = this.yyline;
-                              string_yycolumn = this.yycolumn;
-                              string.append("[");
-                              yybegin(ARREGLO);
-                          } else {
-                              return token("CORCH_A", yytext());
-                          }
-                        }
-   "]"                  { return token("CORCH_C", yytext()); }
+   "("  { return token("PAR_A", yytext()); }
+   ")"  { return token("PAR_C", yytext()); }
+   "["  { return token("CORCH_A", yytext()); }
+   "]"  { return token("CORCH_C", yytext()); }
    ","                  { return token("COMA", yytext()); }
    ":"                  { return token("DOS_PUNTOS", yytext()); }
 
@@ -210,33 +199,23 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 }
 
 <COMENTARIO> {
-  "*}"                 { yybegin(YYINITIAL); }
-  <<EOF>>              { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
-  [^]                  { /* Ignorar contenido */ }
-}
-
-<ARREGLO> {
-  "]"                  {
-                           yybegin(YYINITIAL);
-                           String arreglo = string.append("]").toString();
-                           return token("CTE_ARREGLO", arreglo);
-                       }
-  <<EOF>>              { throw new Error("Error Léxico: Arreglo sin cerrar al final del archivo."); }
-  [^]                  { string.append(yytext()); }
+  "*}"      { yybegin(YYINITIAL); }
+  <<EOF>>   { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
+  [^]       { /* Ignorar contenido */ }
 }
 
 <CADENA> {
-  \"                   {
-                           yybegin(YYINITIAL);
-                           String cadena = string.toString();
-                           return token("CTE_STR", cadena);
-                       }
-  "\\\""               { string.append("\""); }
-  "\\n"                { string.append("\n"); }
-  "\\t"                { string.append("\t"); }
-  "\\\\"               { string.append("\\"); }
-  <<EOF>>              { throw new Error("Error Léxico: Cadena sin cerrar al final del archivo."); }
-  [^]                  { string.append(yytext()); }
+  \"       {
+            yybegin(YYINITIAL);
+            String cadena = string.toString();
+            return token("CTE_STR", cadena);
+           }
+  "\\\""   { string.append("\""); }
+  "\\n"    { string.append("\n"); }
+  "\\t"    { string.append("\t"); }
+  "\\\\"   { string.append("\\"); }
+  <<EOF>>  { throw new Error("Error Léxico: Cadena sin cerrar al final del archivo."); }
+  [^]      { string.append(yytext()); }
 }
 
 /* Fallback de errores */

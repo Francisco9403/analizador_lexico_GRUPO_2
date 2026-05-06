@@ -1,7 +1,7 @@
 integer: contador_items, capacidad_maxima, items_rechazados, prioridad, x
 float: peso_total, peso_limite, promedio_peso, volumen_paquete, peso_float
 boolean: sistema_activo, error_sensor, es_urgente
-float_array: registros_pesado
+float_array[10]: registros_pesado
 
 PROGRAM
     % 1. Inicialización y Entrada (Probamos READs y Constantes)
