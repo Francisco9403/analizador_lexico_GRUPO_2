@@ -70,13 +70,11 @@ start with program;
 /* --------------------------------------------------------
    1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
    -------------------------------------------------------- */
-program ::= bloque_declaraciones:bd seccion_sentencias:bs
-            {:
-            parser.printLog("program ::= bloque_declaraciones seccion_sentencias");
+program ::= bloque_declaraciones:bd seccion_sentencias:bs {:
+            parser.printLog("Regla 1.0.0 program ::= bloque_declaraciones seccion_sentencias");
             RESULT = bd + "\n" + bs; :}
-            | seccion_sentencias:bs
-            {:
-             parser.printLog("program ::= seccion_sentencias");
+            | seccion_sentencias:bs {:
+             parser.printLog("Regla 1.0.1 program ::= seccion_sentencias");
              RESULT= bs; :}
             ;
 
@@ -84,25 +82,25 @@ program ::= bloque_declaraciones:bd seccion_sentencias:bs
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
 
-seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
-                    {:
-                        parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
-                        RESULT = bs;
-                    :}
+seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT {:
+                      parser.printLog("Regla 1.1.0 seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
+                      RESULT = bs; :}
                     | PROGRAM {:
-                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
-                        RESULT = "";
-                    :};
+                      parser.printLog("Regla 1.1.1 seccion_sentencias ::= PROGRAM (Seccion vacia)");
+                      RESULT = ""; :}
+                    | /* vacio - Sin sentencias */
+                    ;
 
-bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
-                        parser.printLog("bloque_declaraciones ::= bloque_declaraciones declaracion");
+bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
+                        parser.printLog("Regla 1.2.0 bloque_declaraciones ::= bloque_declaraciones declaracion");
                         RESULT = bd + "\n" + d;
                       :}| declaracion:d {:
-                        parser.printLog("bloque_declaraciones ::= declaracion");
+                        parser.printLog("Regla 1.2.1 bloque_declaraciones ::= declaracion");
                         RESULT = d;
                        :} ;
 
 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
+            parser.printLog("Regla 1.3.0 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l");
             for(String id : l) {
                     if (!tablaSimbolos.exists(id)) {
                         tablaSimbolos.addId(id, "ID");
@@ -115,290 +113,294 @@ declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
         :};
 
 lista_ids ::= lista_ids:l COMA ID:id {:
-            parser.printLog("lista_ids ::= lista_ids COMA ID");
+            parser.printLog("Regla 1.4.0 lista_ids ::= lista_ids COMA ID");
             l.add(id);
             RESULT = l;
         :}
         | ID:id {:
-            parser.printLog("lista_ids ::= ID");
+            parser.printLog("Regla 1.4.1 lista_ids ::= ID");
             ArrayList<String> lista = new ArrayList<>();
             lista.add(id);
             RESULT = lista;
         :};
 
-tipo ::= TYPE_INT    {: parser.printLog("tipo ::= TYPE_INT"); RESULT = "INT"; :}
-       | TYPE_FLOAT  {: parser.printLog("tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
-       | TYPE_BOOL   {: parser.printLog("tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
-       | TYPE_ARRAY  {: parser.printLog("tipo ::= TYPE_ARRAY"); RESULT = "FLOAT_ARRAY"; :}
+tipo ::= TYPE_INT {:
+        parser.printLog("Regla 1.5.0 tipo ::= TYPE_INT"); RESULT = "INT"; :}
+       | TYPE_FLOAT {:
+        parser.printLog("Regla 1.5.1 tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
+       | TYPE_BOOL {:
+        parser.printLog("Regla 1.5.2 tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
+       | TYPE_ARRAY {:
+        parser.printLog("Regla 1.5.3 tipo ::= TYPE_ARRAY"); RESULT = "FLOAT_ARRAY"; :}
        ;
 
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)
    -------------------------------------------------------- */
 
-bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
-                   parser.printLog("bloque_sentencias ::= bloque_sentencias sentencia");
+bloque_sentencias ::= bloque_sentencias:bs sentencia:s {:
+                   parser.printLog("Regla 2.0.0 bloque_sentencias ::= bloque_sentencias sentencia");
                    RESULT = bs + "\n" + s;
                    :}| sentencia:s {:
-                   parser.printLog("bloque_sentencias ::= sentencia");
+                   parser.printLog("Regla 2.0.1 bloque_sentencias ::= sentencia");
                    RESULT = s;
                     :};
 
 sentencia ::= asignacion:a{:
-            parser.printLog("sentencia ::= asignacion");
+            parser.printLog("Regla 2.1.0 sentencia ::= asignacion");
             RESULT= a;
           :}| impresion:i {:
-            parser.printLog("sentencia ::= impresion");
+            parser.printLog("Regla 2.1.1 sentencia ::= impresion");
             RESULT= i;
           :}| sentencia_if:si {:
-            parser.printLog("sentencia ::= sentencia_if");
+            parser.printLog("Regla 2.1.2 sentencia ::= sentencia_if");
             RESULT= si;
           :}| sentencia_while:sw{:
-            parser.printLog("sentencia ::= sentencia_while");
+            parser.printLog("Regla 2.1.3 sentencia ::= sentencia_while");
             RESULT= sw;
           :}| sentencia_control:sc{:
-            parser.printLog("sentencia ::= sentencia_control");
+            parser.printLog("Regla 2.1.4 sentencia ::= sentencia_control");
             RESULT= sc;
           :};
 
 asignacion ::= lvalue:lv ASIG expresionOr:e {:
-                parser.printLog("asignacion ::= lvalue ASIG expresionOr");
+                parser.printLog("Regla 2.2.0 asignacion ::= lvalue ASIG expresionOr");
                 RESULT = lv + " = " + e;
               :}
               | lvalue:lv ASIG CORCH_A lista_expresiones:le CORCH_C {:
-                parser.printLog("asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
+                parser.printLog("Regla 2.2.1 asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
                 RESULT = lv + " = [" + le + "]";
               :}
               | lvalue:lv ASIG CORCH_A CORCH_C {:
-                parser.printLog("asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
+                parser.printLog("Regla 2.2.2 asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
                 RESULT = lv + " = []";
               :};
 
 lvalue ::= ID:id {:
-           parser.printLog("lvalue ::= ID");
+           parser.printLog("Regla 2.3.0 lvalue ::= ID");
            RESULT = id; :}
          | ID:id CORCH_A expresionOr:index CORCH_C {:
-           parser.printLog("lvalue ::= ID CORCH_A expresionOr CORCH_C");
+           parser.printLog("Regla 2.3.1 lvalue ::= ID CORCH_A expresionOr CORCH_C");
            RESULT = id + "[" + index + "]"; :}
          ;
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A expresionOr PAR_C");
+                parser.printLog("Regla 2.4.0 impresion ::= PRINT PAR_A expresionOr PAR_C");
                 RESULT = "PRINT(" + e + ")";
               :}
             | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
+                parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
                 RESULT = "PRINT(\"" + s + "\", " + e + ")";
-              :}
-            | PRINT PAR_A cte_string:s PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A CTE_STR PAR_C");
-                RESULT = "PRINT(\"" + s + "\")";
-              :};
+            :};
 
-bloque ::= V_INDENT lista_sentencias:ls V_DEDENT{:
-                  parser.printLog("bloque ::= V_INDENT lista_sentencias V_DEDENT");
-                  RESULT = ls;
-                  :};
+bloque ::= V_INDENT lista_sentencias:ls V_DEDENT {:
+         parser.printLog("Regla 2.5.0 bloque ::= V_INDENT lista_sentencias V_DEDENT");
+         RESULT = ls;
+         :};
 
 lista_sentencias ::= lista_sentencias:ls sentencia:s{:
-                  parser.printLog("lista_sentencias ::= lista_sentencias sentencia");
+                  parser.printLog("Regla 2.6.0 lista_sentencias ::= lista_sentencias sentencia");
                   RESULT= ls + "\n" + s;:}
                   | sentencia:s {:
-                  parser.printLog("lista_sentencias ::= sentencia");
+                  parser.printLog("Regla 2.6.1 lista_sentencias ::= sentencia");
                   RESULT = s;:}
                   ;
 
-sentencia_control ::= BREAK    {:
-                    parser.printLog("sentencia_control ::= BREAK");
+sentencia_control ::= BREAK {:
+                    parser.printLog("Regla 2.7.0 sentencia_control ::= BREAK");
                     RESULT = "BREAK";    :}
                     | CONTINUE {:
-                    parser.printLog("sentencia_control ::= CONTINUE");
+                    parser.printLog("Regla 2.7.1 sentencia_control ::= CONTINUE");
                     RESULT = "CONTINUE"; :};
 
-sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es
-               {:
-                  parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es; :};
+sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {:
+                  parser.printLog("Regla 2.8.0 sentencia_if ::= IF expresionOr bloque elif_part else_part");
+                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es;
+                  :};
 
-sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw
-                  {:
-                     parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
-                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw; :};
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {:
+                   parser.printLog("Regla 2.9.0 sentencia_while ::= WHILE expresionOr bloque alt_while_part");
+                   RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw;
+                   :};
 
-elif_part ::= elif_part:el ELIF expresionOr:c bloque:b
-            {:
-               parser.printLog("elif_part ::= elif_part ELIF expresionOr bloque");
-               RESULT = el + "\nELIF" + c + " {\n" + b + "\n}"; :}
-            | /* vacio */
-            {:
-               parser.printLog("elif_part ::= (vacio)");
-               RESULT = ""; :}
+//<if> :== IF <cond> IDENT <sentencias> DEDENT <elif> .
+//<elif> :== ELSE IDENT <sentencias> DEDENT |
+//           ELIF <cond> IDENT <sentencias> DEDENT <elif>
+//           | /* vacio */ .
+
+elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {:
+             parser.printLog("Regla 2.10.0 elif_part ::= elif_part ELIF expresionOr bloque");
+             RESULT = el + "\nELIF" + c + " {\n" + b + "\n}"; :}
+            | /* vacio */ {:
+             parser.printLog("Regla 2.10.1 elif_part ::= (vacio)");
+             RESULT = ""; :}
             ;
 
-else_part ::= ELSE bloque:b
-            {:
-               parser.printLog("else_part ::= ELSE bloque");
-               RESULT = "\nELSE {\n" + b + "\n}"; :}
-            | /* vacio */
-            {:
-               parser.printLog("else_part ::= (vacio)");
-               RESULT = ""; :}
+else_part ::= ELSE bloque:b {:
+             parser.printLog("Regla 2.11.0 else_part ::= ELSE bloque");
+             RESULT = "\nELSE {\n" + b + "\n}"; :}
+            | /* vacio */ {:
+             parser.printLog("Regla 2.11.1 else_part ::= (vacio)");
+             RESULT = ""; :}
             ;
 
-alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b
-                 {:
-                    parser.printLog("alt_while_part ::= alt_while_part ALT_WHILE (expresionOr) bloque");
-                    RESULT = aw + "\nALT_WHILE(" + c + ") {\n" + b + "\n}"; :}
-                 | /* vacio */
-                 {:
-                    parser.printLog("alt_while_part ::= (vacio)");
-                    RESULT = ""; :}
+alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
+                  parser.printLog("Regla 2.12.0 alt_while_part ::= alt_while_part ALT_WHILE expresionOr bloque");
+                  RESULT = aw + "\nALT_WHILE" + c + " {\n" + b + "\n}"; :}
+                 | /* vacio */ {:
+                  parser.printLog("Regla 2.12.1 alt_while_part ::= (vacio)");
+                  RESULT = ""; :}
                  ;
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
 
 expresionOr::= expresionAnd:ea OR expresionOr:eo {:
-              parser.printLog("expresionOr ::= expresionAnd OR expresionOr");
+              parser.printLog("Regla 3.0.0 expresionOr ::= expresionAnd OR expresionOr");
               RESULT = ea + " || " + eo; :}
             | expresionAnd:ea {:
-              parser.printLog("expresionOr ::= expresionAnd");
+              parser.printLog("Regla 3.0.1 expresionOr ::= expresionAnd");
               RESULT = ea; :}
             ;
 
 expresionAnd::= expresionNot:en AND expresionAnd:ea {:
-              parser.printLog("expresionAnd ::= expresionNot AND expresionAnd");
+              parser.printLog("Regla 3.1.0 expresionAnd ::= expresionNot AND expresionAnd");
               RESULT = en + " && " + ea; :}
             | expresionNot:en {:
-              parser.printLog("expresionAnd ::= expresionNot");
+              parser.printLog("Regla 3.1.1 expresionAnd ::= expresionNot");
               RESULT = en; :}
             ;
 
 expresionNot ::= NOT expresionNot:en {:
-               parser.printLog("expresionNot ::= NOT expresionNot");
+               parser.printLog("Regla 3.2.0 expresionNot ::= NOT expresionNot");
                RESULT = "!" + en; :}
              | comparacion:c {:
-               parser.printLog("expresionNot ::= comparacion");
+               parser.printLog("Regla 3.2.1 expresionNot ::= comparacion");
                RESULT= c; :}
              ;
 
 expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionSumRes OP_SUMA expresionMultDiv");
+                parser.printLog("Regla 3.3.0 expresionSumRes ::= expresionSumRes OP_SUMA expresionMultDiv");
                 RESULT = es + " + " + em; :}
                 | expresionSumRes:es OP_RESTA expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionSumRes OP_RESTA expresionMultDiv");
+                parser.printLog("Regla 3.3.1 expresionSumRes ::= expresionSumRes OP_RESTA expresionMultDiv");
                 RESULT = es + " - " + em; :}
                 | expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionMultDiv");
+                parser.printLog("Regla 3.3.2 expresionSumRes ::= expresionMultDiv");
                 RESULT = em; :}
                 ;
 
 expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_MULT expresionMenosU");
+                 parser.printLog("Regla 3.4.0 expresionMultDiv ::= expresionMultDiv OP_MULT expresionMenosU");
                  RESULT = em + " * " + emu; :}
                  | expresionMultDiv:em OP_DIV expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_DIV expresionMenosU");
+                 parser.printLog("Regla 3.4.1 expresionMultDiv ::= expresionMultDiv OP_DIV expresionMenosU");
                  RESULT = em + " / " + emu; :}
                  | expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMenosU");
+                 parser.printLog("Regla 3.4.2 expresionMultDiv ::= expresionMenosU");
                  RESULT = emu; :}
                  ;
 
 comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
+              parser.printLog("Regla 3.5.0 comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
               RESULT = es1 + " == " + es2; :}
               | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
+              parser.printLog("Regla 3.5.1 comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
               RESULT = es1 + " != " + es2; :}
               | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
+              parser.printLog("Regla 3.5.2 comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
               RESULT = es1 + " > " + es2; :}
               | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
+              parser.printLog("Regla 3.5.3 comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
               RESULT = es1 + " < " + es2; :}
               | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
+              parser.printLog("Regla 3.5.4 comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
               RESULT = es1 + " >= " + es2; :}
               | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
+              parser.printLog("Regla 3.5.5 comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
               RESULT = es1 + " <= " + es2; :}
               | expresionSumRes:es {:
-              parser.printLog("comparacion ::= expresionSumRes");
+              parser.printLog("Regla 3.5.6 comparacion ::= expresionSumRes");
               RESULT = es; :}
               ;
 
 
 expresionMenosU ::= OP_RESTA expresionMenosU:e {:
-                parser.printLog("expresionMenosU ::= OP_RESTA expresionMenosU");
+                parser.printLog("Regla 3.6.0 expresionMenosU ::= OP_RESTA expresionMenosU");
                 RESULT = "-" + e; :} %prec UMENOS
                 | expresion:e {:
-                parser.printLog("expresionMenosU ::= expresion");
+                parser.printLog("Regla 3.6.1 expresionMenosU ::= expresion");
                 RESULT = e; :}
                 ;
 
 /* --- Dentro de la sección de EXPRESIONES --- */
 expresion ::= PAR_A expresionOr:e PAR_C {:
-            parser.printLog("expresion ::= PAR_A expresionOr PAR_C");
+            parser.printLog("Regla 3.7.0 expresion ::= PAR_A expresionOr PAR_C");
             RESULT = "(" + e + ")"; :}
             | ID:id {:
+            parser.printLog("Regla 3.7.1 expresion ::= ID");
             if (!tablaSimbolos.exists(id)) {
                     throw new Exception("Error semántico: La variable '" + id + "' no ha sido declarada.");
                 }
                 RESULT = id; :}
             | valorLiteral:vl {:
-            parser.printLog("expresion ::= valorLiteral");
+            parser.printLog("Regla 3.7.2 expresion ::= valorLiteral");
             RESULT = vl; :}
             | ID:id CORCH_A expresionOr:index CORCH_C {:
-            parser.printLog("expresion ::= ID CORCH_A expresionOr CORCH_C");
+            parser.printLog("Regla 3.7.3 expresion ::= ID CORCH_A expresionOr CORCH_C");
             RESULT = id + "[" + index + "]"; :}
             | READ_INT PAR_A PAR_C   {:
-            parser.printLog("expresion ::= READ_INT PAR_A PAR_C");
+            parser.printLog("Regla 3.7.4 expresion ::= READ_INT PAR_A PAR_C");
             RESULT = "READ_INT()";   :}
             | READ_FLOAT PAR_A PAR_C {:
-            parser.printLog("expresion ::= READ_FLOAT PAR_A PAR_C");
+            parser.printLog("Regla 3.7.5 expresion ::= READ_FLOAT PAR_A PAR_C");
             RESULT = "READ_FLOAT()"; :}
             | READ_BOOL PAR_A PAR_C  {:
-            parser.printLog("expresion ::= READ_BOOL PAR_A PAR_C");
+            parser.printLog("Regla 3.7.6 expresion ::= READ_BOOL PAR_A PAR_C");
             RESULT = "READ_BOOL()";  :}
             | sum_acum:sm {:
-            parser.printLog("expresion ::= sum_acum");
+            parser.printLog("Regla 3.7.7 expresion ::= sum_acum");
             RESULT = sm; :}
             ;
 
 
 /* --- Dentro de la sección de valorLiteral --- */
-valorLiteral ::= CTE_INT:n    {: parser.printLog("valorLiteral ::= CTE_INT"); RESULT = n; :}
-              | CTE_FLOAT:f  {: parser.printLog("valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
-              | CONST_BOOL:b {: parser.printLog("valorLiteral ::= CONST_BOOL"); RESULT = b; :}
-              | CTE_ARREGLO:a {: parser.printLog("valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
-              | cte_string:s {: parser.printLog("valorLiteral ::= cte_string"); RESULT = a; :}
+valorLiteral ::= CTE_INT:n
+              {: parser.printLog("Regla 3.8.0 valorLiteral ::= CTE_INT"); RESULT = n; :}
+              | CTE_FLOAT:f
+              {: parser.printLog("Regla 3.8.1 valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
+              | CONST_BOOL:b
+              {: parser.printLog("Regla 3.8.2 valorLiteral ::= CONST_BOOL"); RESULT = b; :}
+              | CTE_ARREGLO:a
+              {: parser.printLog("Regla 3.8.3 valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
+              | cte_string:s
+              {: parser.printLog("Regla 3.8.4 valorLiteral ::= cte_string"); RESULT = s; :}
               ;
 
 cte_string ::= CTE_STR:s {:
+             parser.printLog("Regla 3.9.0 cte_string ::= CTE_STR");
              Parser.tablaSimbolos.addConstant("_" + s, "CTE_STR", s, String.valueOf(s.length()));
              RESULT = s;
             :};
 
-sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A lista_expresiones CORCH_C PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A CORCH_C PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", [])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", " + le + ")"; :};
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C {:
+            parser.printLog("Regla 3.10.0 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A lista_expresiones CORCH_C PAR_C");
+            RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C {:
+            parser.printLog("Regla 3.10.1 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A CORCH_C PAR_C");
+            RESULT = "suma_cumulativa(" + e + ", [])"; :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C {:
+            parser.printLog("Regla 3.10.2 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C");
+            RESULT = "suma_cumulativa(" + e + ", " + le + ")";
+          :};
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
    -------------------------------------------------------- */
 
 lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {:
-                    parser.printLog("lista_expresiones ::= lista_expresiones COMA expresionOr");
+                    parser.printLog("Regla 3.11.0 lista_expresiones ::= lista_expresiones COMA expresionOr");
                     RESULT = li + ", " + e; :}
                     | expresionOr:e {:
-                    parser.printLog("lista_expresiones ::= expresionOr");
+                    parser.printLog("Regla 3.11.1 lista_expresiones ::= expresionOr");
                     RESULT = e; :};
