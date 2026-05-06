@@ -84,22 +84,26 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   \t   { espaciosActuales += 4; }
   {LineTerminator} { espaciosActuales = 0; }
 
+  /* Si la línea empieza con un comentario, saltamos a procesarlo
+     ignorando el nivel de indentación actual. */
+  "%"  { yybegin(YYINITIAL); yypushback(1); }
+  "{*" { yybegin(COMENTARIO); }
+
   [^ \t\r\n] {
       int nivelAnterior = nivelesIndentacion.peek();
-      boolean lineaContinuacionConComa = ",".equals(yytext());
 
-      if (!lineaContinuacionConComa) {
-          if (espaciosActuales > nivelAnterior) {
-              nivelesIndentacion.push(espaciosActuales);
-              colaTokens.add(token("V_INDENT"));
-          }
-          else if (espaciosActuales < nivelAnterior) {
-              while (espaciosActuales < nivelesIndentacion.peek()) {
-                  nivelesIndentacion.pop();
-                  colaTokens.add(token("V_DEDENT"));
-              }
+      /* Eliminamos el chequeo de la coma para simplificar la lógica */
+      if (espaciosActuales > nivelAnterior) {
+          nivelesIndentacion.push(espaciosActuales);
+          colaTokens.add(token("V_INDENT"));
+      }
+      else if (espaciosActuales < nivelAnterior) {
+          while (espaciosActuales < nivelesIndentacion.peek()) {
+              nivelesIndentacion.pop();
+              colaTokens.add(token("V_DEDENT"));
           }
       }
+
       yypushback(1);
       yybegin(YYINITIAL);
 

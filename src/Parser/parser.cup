@@ -384,9 +384,13 @@ cte_string ::= CTE_STR:s {:
              RESULT = s;
             :};
 
-sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA expresionOr:array PAR_C {:
-            parser.printLog("Regla 3.10.0 sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA expresionOr PAR_C");
-            RESULT = "suma_cumulativa(" + e + ", " + array + ")";
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA arreglo_literal:al PAR_C {:
+            parser.printLog("Regla 3.10.0 sum_acum con lista literal");
+            RESULT = "suma_cumulativa(" + e + ", " + al + ")";
+          :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA ID:id PAR_C {:
+            parser.printLog("Regla 3.10.1 sum_acum con identificador");
+            RESULT = "suma_cumulativa(" + e + ", " + id + ")";
           :};
 
 /* --------------------------------------------------------
