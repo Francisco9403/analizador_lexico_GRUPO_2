@@ -8,7 +8,7 @@ import java.util.List;
 import Lexer.Token;
 import Exception.SyntaxException;
 import java_cup.runtime.Symbol;
-import ast.NodosAST.NodoPrograma;
+import ast.NodoPrograma;
 
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.

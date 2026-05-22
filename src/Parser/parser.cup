@@ -6,7 +6,6 @@ import java.util.ArrayList;
 import Lexer.Lexer;
 import TablaSimbolo.TablaSimbolo;
 import ast.*;
-import ast.NodosAST.*;
 
 class Parser;
 
@@ -57,14 +56,14 @@ terminal UMENOS;
 /* --- DECLARACION DE NO TERMINALES --- */
 nonterminal NodoPrograma program;
 nonterminal String tipo;
-nonterminal Nodo cte_string;
-nonterminal ArrayList<Nodo> bloque_declaraciones, declaracion;
+nonterminal NodoC cte_string;
+nonterminal ArrayList<NodoC> bloque_declaraciones, declaracion;
 nonterminal ArrayList<String> lista_ids;
-nonterminal ArrayList<Nodo> bloque_sentencias, seccion_sentencias, lista_sentencias, bloque;
-nonterminal ArrayList<Nodo> elif_part, else_part, alt_while_part, lista_expresiones;
-nonterminal Nodo sentencia, asignacion, impresion, sentencia_if, sentencia_while, sentencia_control;
-nonterminal Nodo expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
-nonterminal Nodo comparacion, valorLiteral, lvalue, arreglo_literal, sum_acum;
+nonterminal ArrayList<NodoC> bloque_sentencias, seccion_sentencias, lista_sentencias, bloque;
+nonterminal ArrayList<NodoC> elif_part, else_part, alt_while_part, lista_expresiones;
+nonterminal NodoC sentencia, asignacion, impresion, sentencia_if, sentencia_while, sentencia_control;
+nonterminal NodoC expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
+nonterminal NodoC comparacion, valorLiteral, lvalue, arreglo_literal, sum_acum;
 
 start with program;
 
@@ -90,11 +89,11 @@ seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT {:
                     :}
                     | PROGRAM {:
                       parser.printLog("Regla 1.1.1 seccion_sentencias ::= PROGRAM (Seccion vacia)");
-                      RESULT = new ArrayList<Nodo>();
+                      RESULT = new ArrayList<NodoC>();
                     :}
                     | /* vacio - Sin sentencias */ {:
                       parser.printLog("Regla 1.1.2 seccion_sentencias ::= ( Sin sección PROGRAM )");
-                      RESULT = new ArrayList<Nodo>();
+                      RESULT = new ArrayList<NodoC>();
                     :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
@@ -109,7 +108,7 @@ bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
 
 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
             parser.printLog("Regla 1.3.0 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l");
-            ArrayList<Nodo> decls = new ArrayList<>();
+            ArrayList<NodoC> decls = new ArrayList<>();
             for(String id : l) {
                 if (!tablaSimbolos.exists(id)) {
                     tablaSimbolos.addId(id, "ID");
@@ -153,7 +152,7 @@ bloque_sentencias ::= bloque_sentencias:bs sentencia:s {:
                    :}
                  | sentencia:s {:
                    parser.printLog("Regla 2.0.1 bloque_sentencias ::= sentencia");
-                   ArrayList<Nodo> lista = new ArrayList<>(); lista.add(s); RESULT = lista;
+                   ArrayList<NodoC> lista = new ArrayList<>(); lista.add(s); RESULT = lista;
                  :};
 
 sentencia ::= asignacion:a {: parser.printLog("Regla 2.1.0 sentencia ::= asignacion"); RESULT= a; :}
@@ -197,7 +196,7 @@ lista_sentencias ::= lista_sentencias:ls sentencia:s{:
                   :}
                   | sentencia:s {:
                   parser.printLog("Regla 2.6.1 lista_sentencias ::= sentencia");
-                  ArrayList<Nodo> ls = new ArrayList<>(); ls.add(s); RESULT = ls;
+                  ArrayList<NodoC> ls = new ArrayList<>(); ls.add(s); RESULT = ls;
                   :};
 
 sentencia_control ::= BREAK {:
@@ -226,7 +225,7 @@ elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {:
             :}
             | /* vacio */ {:
              parser.printLog("Regla 2.10.1 elif_part ::= (vacio)");
-             RESULT = new ArrayList<Nodo>();
+             RESULT = new ArrayList<NodoC>();
             :};
 
 else_part ::= ELSE bloque:b {:
@@ -235,7 +234,7 @@ else_part ::= ELSE bloque:b {:
             :}
             | /* vacio */ {:
              parser.printLog("Regla 2.11.1 else_part ::= (vacio)");
-             RESULT = new ArrayList<Nodo>();
+             RESULT = new ArrayList<NodoC>();
             :};
 
 alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
@@ -245,7 +244,7 @@ alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
                  :}
                  | /* vacio */ {:
                   parser.printLog("Regla 2.12.1 alt_while_part ::= (vacio)");
-                  RESULT = new ArrayList<Nodo>();
+                  RESULT = new ArrayList<NodoC>();
                  :};
 
 /* --------------------------------------------------------
@@ -429,5 +428,5 @@ lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {:
                     :}
                     | expresionOr:e {:
                     parser.printLog("Regla 3.11.1 lista_expresiones ::= expresionOr");
-                    ArrayList<Nodo> le = new ArrayList<>(); le.add(e); RESULT = le;
+                    ArrayList<NodoC> le = new ArrayList<>(); le.add(e); RESULT = le;
                     :};
