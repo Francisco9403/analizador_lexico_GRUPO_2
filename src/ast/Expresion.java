@@ -1,7 +1,8 @@
 package ast;
 
 public abstract class Expresion extends NodoC {
-    public Expresion() {
-        super();
-    }
+    protected String tipoDato = "UNKNOWN";
+
+    public String getTipoDato() { return tipoDato; }
+    public void setTipoDato(String tipoDato) { this.tipoDato = tipoDato; }
 }

@@ -6,6 +6,7 @@ import java.util.List;
 public abstract class NodoC {
     private static int contadorNodos = 0;
     private final int idNodo;
+    protected String tipoDato = "UNKNOWN";
 
     public NodoC() {
         this.idNodo = contadorNodos++;
@@ -21,6 +22,14 @@ public abstract class NodoC {
     // Las subclases devuelven su lista de nodos hijos apuntados
     public List<NodoC> getHijos() {
         return new ArrayList<>();
+    }
+
+    public String getTipoDato() {
+        return tipoDato;
+    }
+
+    public void setTipoDato(String tipoDato) {
+        this.tipoDato = tipoDato;
     }
 
     // Genera la cadena completa en formato DOT para Graphviz

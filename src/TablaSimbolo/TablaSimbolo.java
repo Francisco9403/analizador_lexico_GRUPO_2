@@ -34,6 +34,13 @@ public class TablaSimbolo {
         }
     }
 
+    public String getType(String name) {
+        if (exists(name)) {
+            return table.get(name).type;
+        }
+        return "UNKNOWN"; // O lanza una excepción si prefieres
+    }
+
     public void generateFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter("ts.txt"))) {
             int maxNombre = 20, maxToken = 15, maxTipo = 15, maxValor = 20;
