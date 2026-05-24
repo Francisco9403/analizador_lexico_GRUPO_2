@@ -14,6 +14,9 @@ public class NodoLlamada extends Expresion {
 
     @Override
     public String getEtiqueta() {
+        if (getTipoDato() != null && !getTipoDato().equals("UNKNOWN")) {
+            return "Llamada: " + nombreFuncion + " (" + getTipoDato() + ")";
+        }
         return "Llamada: " + nombreFuncion;
     }
 
