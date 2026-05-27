@@ -8,6 +8,18 @@ public abstract class NodoC {
     private final int idNodo;
     protected String tipoDato = "UNKNOWN";
 
+    protected String irRef; // Donde se guardará el registro LLVM (ej. "%3")
+
+    public String getIrRef() {
+        return irRef;
+    }
+
+    public void setIrRef(String irRef) {
+        this.irRef = irRef;
+    }
+
+    public abstract String generarCodigo();
+
     public NodoC() {
         this.idNodo = contadorNodos++;
     }

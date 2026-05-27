@@ -10,6 +10,7 @@ import Exception.SyntaxException;
 import java_cup.runtime.Symbol;
 import ast.NodoPrograma;
 
+
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
  */
@@ -56,6 +57,11 @@ public class CompilerService {
                 } catch (Exception ex) {
                     out.append("[AVISO] No se pudo generar el PNG. Asegúrese de tener Graphviz instalado y en el PATH.\n");
                 }
+
+                String llvmCode = raiz.generarCodigo();
+                java.nio.file.Files.writeString(java.nio.file.Path.of("programa.ll"), llvmCode);
+                out.append("[OK] Código LLVM IR generado en programa.ll\n");
+
             }
 
             parser.tablaSimbolos.generateFile();

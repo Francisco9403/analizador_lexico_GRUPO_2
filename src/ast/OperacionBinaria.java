@@ -13,6 +13,9 @@ public abstract class OperacionBinaria extends Expresion {
 
     protected abstract String getNombreOperacion();
 
+    public Expresion getIzquierda() { return izquierda; }
+    public Expresion getDerecha() { return derecha; }
+
     @Override
     public String getEtiqueta() {
         return getNombreOperacion();

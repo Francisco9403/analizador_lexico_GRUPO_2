@@ -25,4 +25,15 @@ public class NodoListaSentencias extends NodoC {
     public List<NodoC> getHijos() {
         return new ArrayList<>(sentencias);
     }
+
+    @Override
+    public String generarCodigo() {
+        StringBuilder sb = new StringBuilder();
+        for (NodoC sentencia : sentencias) {
+            if (sentencia != null) {
+                sb.append(sentencia.generarCodigo());
+            }
+        }
+        return sb.toString();
+    }
 }

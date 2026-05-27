@@ -1,0 +1,61 @@
+package llvm;
+
+import java.util.Stack;
+
+public class CodeGeneratorHelper {
+    private static int nextID = 0;
+    private static int labelID = 0;
+    private static Stack<String> loopStartLabels = new Stack<>();
+    private static Stack<String> loopEndLabels = new Stack<>();
+
+    private CodeGeneratorHelper(){}
+
+    public static String getNewPointer(){
+        nextID += 1;
+        return "%" + nextID; // Ej: %1, %2, %3... (más estándar en LLVM)
+    }
+
+    public static String getNewLabel(){
+        labelID += 1;
+        return "label_" + labelID;
+    }
+
+
+    public static void enterLoop(String startLabel, String endLabel) {
+        loopStartLabels.push(startLabel);
+        loopEndLabels.push(endLabel);
+    }
+
+    public static void exitLoop() {
+        loopStartLabels.pop();
+        loopEndLabels.pop();
+    }
+
+    public static String getCurrentLoopStart() {
+        return loopStartLabels.isEmpty() ? "error_no_loop" : loopStartLabels.peek();
+    }
+
+    public static String getCurrentLoopEnd() {
+        return loopEndLabels.isEmpty() ? "error_no_loop" : loopEndLabels.peek();
+    }
+
+    // Podés agregar un reseteo por si querés compilar múltiples veces en la misma corrida
+    //public static void reset() {
+    //    nextID = 0;
+    //    labelID = 0;
+    //}
+
+    // Acordate de vaciar las pilas en tu método reset()
+    public static void reset() {
+        nextID = 0;
+        labelID = 0;
+        loopStartLabels.clear();
+        loopEndLabels.clear();
+    }
+
+    public static String mapearTipoLLVM(String tipoDato) {
+        if ("FLOAT".equals(tipoDato)) return "double";
+        if ("BOOL".equals(tipoDato)) return "i1";
+        return "i32"; // Para INT (y por defecto)
+    }
+}
