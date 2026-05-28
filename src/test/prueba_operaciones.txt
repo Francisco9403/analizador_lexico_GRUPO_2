@@ -1,0 +1,19 @@
+integer: a, b, res_i
+float: f1, f2, res_f
+
+PROGRAM
+    a = 10
+    b = 5
+
+    % Operaciones con enteros y precedencia de paréntesis
+    % (10 + 5) * 2 - 5 = 25
+    res_i = (a + b) * 2 - 5
+
+    % Operaciones con flotantes, división y menos unario
+    % (10.0 / -2.0) + 10.0 = 5.0
+    f1 = 10.0
+    f2 = -2.0
+    res_f = (f1 / f2) + 10.0
+
+    PRINT("Resultado entero (esperado 25):", res_i)
+    PRINT("Resultado float (esperado 5.0):", res_f)

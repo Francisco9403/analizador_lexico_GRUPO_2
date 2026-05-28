@@ -11,24 +11,26 @@ declare double @suma_cumulativa(i32, ptr)
 
 define i32 @main() {
 entry:
-  %cantidad = alloca i32
-  %resultado = alloca double
   %valores = alloca i32
-  store i32 3, i32* %cantidad
+  %aux = alloca double
   %1 = alloca [3 x double]
   %2 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 0
-  store double 10.5, double* %2
+  store double 10.0, double* %2
   %3 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 1
-  store double 30.0, double* %3
+  store double 20.0, double* %3
   %4 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 2
-  store double 5.5, double* %4
+  store double 30.0, double* %4
   %5 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 0
   store ptr %5, ptr %valores
-  %6 = load i32, i32* %cantidad
-  %7 = load ptr, ptr %valores
-  %8 = call double @suma_cumulativa(i32 %6, ptr %7)
-  store double %8, double* %resultado
-  %9 = load double, double* %resultado
-  %10 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.float, i32 0, i32 0), double %9)
+  %6 = getelementptr double, double* %valores, i32 1
+  %7 = load double, double* %6
+  store double %7, double* %aux
+  %8 = load double, double* %aux
+  %9 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.float, i32 0, i32 0), double %8)
+  %10 = getelementptr double, double* %valores, i32 1
+  %11 = load double, double* %10
+  store double %11, double* %aux
+  %12 = load double, double* %aux
+  %13 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.float, i32 0, i32 0), double %12)
   ret i32 0
 }
