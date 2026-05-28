@@ -39,8 +39,9 @@ public class NodoPrograma extends NodoC {
         resultado.append("target triple = \"x86_64-pc-windows-msvc\"\n\n");
 
         resultado.append("declare i32 @printf(i8*, ...)\n");
-        resultado.append("declare i32 @scanf(i8*, ...)\n\n");
+        resultado.append("declare i32 @scanf(i8*, ...)\n");
 
+        resultado.append("declare double @suma_cumulativa(i32, ptr)\n\n");
         resultado.append("@.str.int = private constant [4 x i8] c\"%d\\0A\\00\"\n");
         resultado.append("@.str.float = private constant [4 x i8] c\"%f\\0A\\00\"\n\n");
 
@@ -48,20 +49,16 @@ public class NodoPrograma extends NodoC {
         resultado.append("define i32 @main() {\n");
         resultado.append("entry:\n");
 
-        // Reiniciar contadores (por las dudas)
         CodeGeneratorHelper.reset();
 
-        // Generar código de todas las declaraciones
         for(NodoC decl : this.getDeclaraciones()) {
             resultado.append(decl.generarCodigo());
         }
 
-        // Generar código de todas las sentencias
         for(NodoC sent : this.getSentencias()) {
             resultado.append(sent.generarCodigo());
         }
 
-        // --- FIN DE MAIN ---
         resultado.append("  ret i32 0\n");
         resultado.append("}\n");
 

@@ -19,7 +19,6 @@ public class NodoOperacion extends NodoC {
 
     @Override
     public String getEtiqueta() {
-        // Mostramos el operador y, si el parser ya le seteó el tipo, se lo agregamos
         if (getTipoDato() != null && !getTipoDato().equals("UNKNOWN")) {
             return operador + " (" + getTipoDato() + ")";
         }
@@ -38,15 +37,16 @@ public class NodoOperacion extends NodoC {
 
         this.setIrRef(CodeGeneratorHelper.getNewPointer());
 
-
-        // El tipo de los datos que se van a operar/comparar
         String tipoOperandos = this.getIzquierda().getTipoDato();
         String typeLLVM = CodeGeneratorHelper.mapearTipoLLVM(tipoOperandos);
 
-        String opLLVM = get_llvm_op_code(this.getOperador(), this.getTipoDato());
+        // Transformación directa: forzar 1 bit para compuertas lógicas
+        if (operador.equals("&&") || operador.equals("||")) {
+            typeLLVM = "i1";
+        }
 
-        // 4. Emitir la instrucción
-        // Ej: %3 = add i32 %1, %2
+        String opLLVM = get_llvm_op_code(this.getOperador(), tipoOperandos);
+
         codigo.append(String.format("  %s = %s %s %s, %s\n",
                 this.getIrRef(), opLLVM, typeLLVM,
                 this.getIzquierda().getIrRef(), this.getDerecha().getIrRef()));
@@ -54,14 +54,22 @@ public class NodoOperacion extends NodoC {
         return codigo.toString();
     }
 
-    // Método auxiliar para mapear el símbolo (+, -) al comando de LLVM
-    private String get_llvm_op_code(String operador, String tipoDato) {
-        boolean esFloat = tipoDato.equals("FLOAT");
+    private String get_llvm_op_code(String operador, String tipoOperandos) {
+        boolean esFloat = tipoOperandos != null && tipoOperandos.equals("FLOAT");
+
         switch(operador) {
             case "+": return esFloat ? "fadd" : "add";
             case "-": return esFloat ? "fsub" : "sub";
             case "*": return esFloat ? "fmul" : "mul";
             case "/": return esFloat ? "fdiv" : "sdiv";
+            case "==": return esFloat ? "fcmp oeq" : "icmp eq";
+            case "!=": return esFloat ? "fcmp one" : "icmp ne";
+            case ">":  return esFloat ? "fcmp ogt" : "icmp sgt";
+            case "<":  return esFloat ? "fcmp olt" : "icmp slt";
+            case ">=": return esFloat ? "fcmp oge" : "icmp sge";
+            case "<=": return esFloat ? "fcmp ole" : "icmp sle";
+            case "&&": return "and";
+            case "||": return "or";
             default: return "unknown_op";
         }
     }
