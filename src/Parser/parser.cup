@@ -64,7 +64,7 @@ nonterminal ArrayList<NodoC> bloque_sentencias, seccion_sentencias, lista_senten
 nonterminal ArrayList<NodoC> elif_part, else_part, alt_while_part, lista_expresiones;
 nonterminal NodoC sentencia, asignacion, impresion, sentencia_if, sentencia_while, sentencia_control;
 nonterminal NodoC expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
-nonterminal NodoC comparacion, valorLiteral, lvalue, arreglo_literal, sum_acum;
+nonterminal NodoC comparacion, valorLiteral, arreglo_literal, sum_acum;
 
 start with program;
 
@@ -177,15 +177,6 @@ asignacion ::= ID:id ASIG expresionOr:e {:
     nodo.setTipoDato(tipoVar); // Decoramos el nodo
     RESULT = nodo;
 :};
-
-lvalue ::= ID:id {:
-           parser.printLog("Regla 2.3.0 lvalue ::= ID");
-           RESULT = new NodoIdentificador(id);
-         :}
-         | ID:id CORCH_A expresionOr:index CORCH_C {:
-           parser.printLog("Regla 2.3.1 lvalue ::= ID CORCH_A expresionOr CORCH_C");
-           RESULT = new NodoAccesoArreglo(id, index);
-         :};
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.0 impresion ::= PRINT PAR_A expresionOr PAR_C");
