@@ -71,4 +71,11 @@ public class TablaSimbolo {
             name = n; token = t; type = ty; value = v; length = l;
         }
     }
+
+    // Agregá este método en TablaSimbolo.java
+    public void clear() {
+        // Reemplazá 'this.mapaDeSimbolos' por el nombre del HashMap o la lista
+        // que uses internamente para guardar las variables.
+        this.table.clear();
+    }
 }

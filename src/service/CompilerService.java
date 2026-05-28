@@ -23,6 +23,8 @@ public class CompilerService {
         StringBuilder out = new StringBuilder();
 
         try {
+            // Antes de parsear, reseteamos la tabla para que no arrastre datos viejos.
+            Parser.tablaSimbolos.clear();
             List<Token> tokens = lex(sourceCode);
 
             out.append("=== ANALISIS LEXICO ===\n");

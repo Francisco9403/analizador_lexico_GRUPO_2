@@ -11,45 +11,24 @@ declare double @suma_cumulativa(i32, ptr)
 
 define i32 @main() {
 entry:
-  %contador = alloca i32
-  %sumatoria = alloca i32
-  store i32 0, i32* %contador
-  store i32 0, i32* %sumatoria
-  br label %label_1
-
-label_1:
-  %1 = load i32, i32* %contador
-  %2 = icmp slt i32 %1, 10
-  br i1 %2, label %label_2, label %label_3
-
-label_2:
-  %3 = load i32, i32* %contador
-  %4 = add i32 %3, 1
-  store i32 %4, i32* %contador
-  %5 = load i32, i32* %contador
-  %6 = icmp eq i32 %5, 3
-  br i1 %6, label %label_4, label %label_5
-
-label_4:
-  br label %label_1
-
-label_5:
-  %7 = load i32, i32* %contador
-  %8 = icmp eq i32 %7, 7
-  br i1 %8, label %label_6, label %label_7
-
-label_6:
-  br label %label_3
-
-label_7:
-  %9 = load i32, i32* %sumatoria
-  %10 = load i32, i32* %contador
-  %11 = add i32 %9, %10
-  store i32 %11, i32* %sumatoria
-  br label %label_1
-
-label_3:
-  %12 = load i32, i32* %sumatoria
-  %13 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 %12)
+  %cantidad = alloca i32
+  %resultado = alloca double
+  %valores = alloca i32
+  store i32 3, i32* %cantidad
+  %1 = alloca [3 x double]
+  %2 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 0
+  store double 10.5, double* %2
+  %3 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 1
+  store double 30.0, double* %3
+  %4 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 2
+  store double 5.5, double* %4
+  %5 = getelementptr [3 x double], [3 x double]* %1, i32 0, i32 0
+  store ptr %5, ptr %valores
+  %6 = load i32, i32* %cantidad
+  %7 = load ptr, ptr %valores
+  %8 = call double @suma_cumulativa(i32 %6, ptr %7)
+  store double %8, double* %resultado
+  %9 = load double, double* %resultado
+  %10 = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.float, i32 0, i32 0), double %9)
   ret i32 0
 }
