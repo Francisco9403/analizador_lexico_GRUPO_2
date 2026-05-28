@@ -1522,7 +1522,9 @@ class CUP$Parser$actions {
 		NodoC e = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.peek()).value;
 		
                 parser.printLog("Regla 3.6.0 expresionMenosU ::= OP_RESTA expresionMenosU");
-                RESULT = new NodoUnario("-", e);
+                NodoUnario nodo = new NodoUnario("-", e);
+                nodo.setTipoDato(e.getTipoDato());
+                RESULT = nodo;
                 
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("expresionMenosU",26, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }

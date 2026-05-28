@@ -1,0 +1,19 @@
+integer: contador, sumatoria
+
+PROGRAM
+    contador = 0
+    sumatoria = 0
+
+    % Prueba de control de flujo
+    WHILE contador < 10
+        contador = contador + 1
+
+        IF contador == 3
+            CONTINUE
+
+        IF contador == 7
+            BREAK
+
+        sumatoria = sumatoria + contador
+
+    PRINT("Sumatoria final (sin el 3, hasta el 6):", sumatoria)

@@ -388,7 +388,9 @@ comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
 
 expresionMenosU ::= OP_RESTA expresionMenosU:e {:
                 parser.printLog("Regla 3.6.0 expresionMenosU ::= OP_RESTA expresionMenosU");
-                RESULT = new NodoUnario("-", e);
+                NodoUnario nodo = new NodoUnario("-", e);
+                nodo.setTipoDato(e.getTipoDato());
+                RESULT = nodo;
                 :} %prec UMENOS
                 | expresion:e {:
                 parser.printLog("Regla 3.6.1 expresionMenosU ::= expresion");

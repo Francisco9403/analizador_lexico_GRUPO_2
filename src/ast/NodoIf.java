@@ -32,12 +32,10 @@ public class NodoIf extends Sentencia {
         return hijos;
     }
 
-    // --- MÉTODO AUXILIAR PARA EVITAR DOBLE SALTO ---
     private boolean terminaConSalto(String codigoBloque) {
         if (codigoBloque == null || codigoBloque.trim().isEmpty()) return false;
         String[] lineas = codigoBloque.trim().split("\n");
         String ultimaLinea = lineas[lineas.length - 1].trim();
-        // Si el bloque ya tiene un break, continue o return, no agregamos otro salto
         return ultimaLinea.startsWith("br ") || ultimaLinea.startsWith("ret ");
     }
 
@@ -48,29 +46,24 @@ public class NodoIf extends Sentencia {
         String labelThen = CodeGeneratorHelper.getNewLabel();
         String labelEnd = CodeGeneratorHelper.getNewLabel();
 
-        String labelElse = null;
-        if (this.bloqueElse != null && !this.bloqueElse.isEmpty()) {
-            labelElse = CodeGeneratorHelper.getNewLabel();
-        }
+        // Si hay un ELSE, reservamos su etiqueta, si no, apuntamos al final
+        String labelElse = (this.bloqueElse != null && !this.bloqueElse.isEmpty()) ? CodeGeneratorHelper.getNewLabel() : labelEnd;
 
-        String destinoFalsoPrincipal = labelEnd;
-        List<String> labelsElifCond = new ArrayList<>();
-
-        if (this.elifs != null && !this.elifs.isEmpty()) {
+        List<String> labelsElif = new ArrayList<>();
+        if (this.elifs != null) {
             for (int i = 0; i < this.elifs.size(); i++) {
-                labelsElifCond.add(CodeGeneratorHelper.getNewLabel());
+                labelsElif.add(CodeGeneratorHelper.getNewLabel());
             }
-            destinoFalsoPrincipal = labelsElifCond.get(0);
-        } else if (labelElse != null) {
-            destinoFalsoPrincipal = labelElse;
         }
 
-        // Evaluar condición IF
+        // 1. Evaluar IF principal
+        String destinoFalsoPrincipal = labelsElif.isEmpty() ? labelElse : labelsElif.get(0);
+
         codigo.append(this.condicion.generarCodigo());
         codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
                 this.condicion.getIrRef(), labelThen, destinoFalsoPrincipal));
 
-        // Bloque THEN
+        // 2. Bloque THEN principal
         codigo.append("\n").append(labelThen).append(":\n");
         StringBuilder codigoThen = new StringBuilder();
         if (this.bloqueThen != null) {
@@ -79,28 +72,47 @@ public class NodoIf extends Sentencia {
             }
         }
         codigo.append(codigoThen);
-        // Solo agregamos el salto de salida si no hay un break/continue previo
         if (!terminaConSalto(codigoThen.toString())) {
             codigo.append(String.format("  br label %%%s\n", labelEnd));
         }
 
-        // Bloque ELIF
+        // 3. Cadena de bloques ELIF
         if (this.elifs != null && !this.elifs.isEmpty()) {
             for (int i = 0; i < this.elifs.size(); i++) {
-                codigo.append("\n").append(labelsElifCond.get(i)).append(":\n");
+                codigo.append("\n").append(labelsElif.get(i)).append(":\n");
 
-                NodoC elifNodo = this.elifs.get(i);
-                String codigoElif = elifNodo.generarCodigo();
-                codigo.append(codigoElif);
+                NodoIf elifNodo = (NodoIf) this.elifs.get(i);
 
-                if (!terminaConSalto(codigoElif)) {
+                // Acá armamos la cadena: si es falso, va al siguiente ELIF o al ELSE
+                String destinoFalsoElif;
+                if (i < this.elifs.size() - 1) {
+                    destinoFalsoElif = labelsElif.get(i + 1);
+                } else {
+                    destinoFalsoElif = labelElse;
+                }
+
+                String labelElifThen = CodeGeneratorHelper.getNewLabel();
+
+                codigo.append(elifNodo.condicion.generarCodigo());
+                codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
+                        elifNodo.condicion.getIrRef(), labelElifThen, destinoFalsoElif));
+
+                codigo.append("\n").append(labelElifThen).append(":\n");
+                StringBuilder codigoElifThen = new StringBuilder();
+                if (elifNodo.bloqueThen != null) {
+                    for (NodoC sent : elifNodo.bloqueThen) {
+                        codigoElifThen.append(sent.generarCodigo());
+                    }
+                }
+                codigo.append(codigoElifThen);
+                if (!terminaConSalto(codigoElifThen.toString())) {
                     codigo.append(String.format("  br label %%%s\n", labelEnd));
                 }
             }
         }
 
-        // Bloque ELSE
-        if (labelElse != null) {
+        // 4. Bloque ELSE final
+        if (this.bloqueElse != null && !this.bloqueElse.isEmpty()) {
             codigo.append("\n").append(labelElse).append(":\n");
             StringBuilder codigoElse = new StringBuilder();
             for (NodoC sentElse : this.bloqueElse) {
@@ -112,7 +124,6 @@ public class NodoIf extends Sentencia {
             }
         }
 
-        // Etiqueta Final
         codigo.append("\n").append(labelEnd).append(":\n");
 
         return codigo.toString();

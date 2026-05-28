@@ -1,0 +1,12 @@
+integer: cantidad
+float: resultado
+float_array[3]: valores
+
+PROGRAM
+    cantidad = 3
+    valores = [10.5, 20.0, 5.5]
+
+    % Prueba especifica de la funcion externa
+    resultado = suma_cumulativa(cantidad, valores)
+
+    PRINT("Resultado de la suma:", resultado)

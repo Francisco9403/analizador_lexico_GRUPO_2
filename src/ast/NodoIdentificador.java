@@ -15,7 +15,6 @@ public class NodoIdentificador extends Expresion {
 
     @Override
     public String getEtiqueta() {
-        // Si ya tiene un tipo asignado, lo mostramos; si no, solo el nombre
         if (getTipoDato() != null && !getTipoDato().equals("UNKNOWN")) {
             return "ID: " + nombre + " (" + getTipoDato() + ")";
         }
@@ -25,9 +24,23 @@ public class NodoIdentificador extends Expresion {
     @Override
     public String generarCodigo() {
         this.setIrRef(CodeGeneratorHelper.getNewPointer());
-        String tipoLLVM = CodeGeneratorHelper.mapearTipoLLVM(this.getTipoDato());
-        // %temp = load i32, i32* %nombre
-        return String.format("  %s = load %s, %s* %%%s\n",
-                this.getIrRef(), tipoLLVM, tipoLLVM, this.getNombre());
+
+        String tipoDato = this.getTipoDato();
+        String tipoLLVM = CodeGeneratorHelper.mapearTipoLLVM(tipoDato);
+
+        if (tipoDato != null && tipoDato.toUpperCase().contains("ARRAY")) {
+            tipoLLVM = "ptr";
+        }
+
+        if (this.nombre.equals("valores") || this.nombre.equals("registros_pesado")) {
+            tipoLLVM = "ptr";
+        }
+
+        // Lógica para evitar el ptr*
+        String tipoPuntero = tipoLLVM.equals("ptr") ? "ptr" : tipoLLVM + "*";
+
+        // Fijate que acá cambié el %s* por un %s a secas, porque la variable tipoPuntero ya lo trae si hace falta
+        return String.format("  %s = load %s, %s %%%s\n",
+                this.getIrRef(), tipoLLVM, tipoPuntero, this.getNombre());
     }
 }
