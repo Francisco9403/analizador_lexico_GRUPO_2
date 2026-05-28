@@ -16,6 +16,9 @@ import ast.NodoPrograma;
  */
 public class CompilerService {
 
+    // Ejecuta to do el proceso del compilador paso a paso.
+    // Analiza las palabras, revisa la gramática, y crea todos los archivos finales
+    // (el código LLVM, la imagen del árbol AST y la tabla de símbolos).
     public String compileSource(String sourceCode) {
         StringBuilder out = new StringBuilder();
 
@@ -41,7 +44,7 @@ public class CompilerService {
             java.nio.file.Files.write(java.nio.file.Path.of("logs_reglas.txt"), logs);
             out.append("\n[OK] Logs guardados en logs_reglas.txt\n");
 
-            // --- NUEVO: GENERACIÓN DEL AST, ARCHIVO .DOT Y .PNG ---
+            // GENERACIÓN DEL AST, ARCHIVO .DOT Y .PNG ---
             if (result != null && result.value != null) {
                 NodoPrograma raiz = (NodoPrograma) result.value;
                 String dotCode = raiz.generarGrafoDot();

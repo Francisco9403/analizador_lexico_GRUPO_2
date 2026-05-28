@@ -33,7 +33,7 @@ public abstract class Nodo {
     }
 
     private void generarNodosYAristas(StringBuilder sb, Nodo nodo) {
-        // ¡LA MAGIA ESTÁ ACÁ! Escapamos las comillas internas para que Graphviz no se rompa
+        // Escapamos las comillas internas para que Graphviz no se rompa
         String etiquetaEscapada = nodo.getEtiqueta().replace("\"", "\\\"");
 
         // Declaramos el nodo actual con su ID único y su etiqueta escapada

@@ -39,7 +39,6 @@ public class NodoIdentificador extends Expresion {
         // Lógica para evitar el ptr*
         String tipoPuntero = tipoLLVM.equals("ptr") ? "ptr" : tipoLLVM + "*";
 
-        // Fijate que acá cambié el %s* por un %s a secas, porque la variable tipoPuntero ya lo trae si hace falta
         return String.format("  %s = load %s, %s %%%s\n",
                 this.getIrRef(), tipoLLVM, tipoPuntero, this.getNombre());
     }
