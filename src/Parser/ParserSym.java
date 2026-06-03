@@ -8,53 +8,51 @@ package Parser;
 /** CUP generated class containing symbol constants. */
 public class ParserSym {
   /* terminals */
-  public static final int CTE_ARREGLO = 20;
-  public static final int COMP_MENOR_IGUAL = 32;
-  public static final int TYPE_ARRAY = 15;
-  public static final int SUMA_ACUM = 47;
-  public static final int CTE_FLOAT = 23;
-  public static final int COMP_IGUAL = 29;
-  public static final int DOS_PUNTOS = 44;
+  public static final int COMP_MENOR_IGUAL = 30;
+  public static final int TYPE_ARRAY = 14;
+  public static final int SUMA_ACUM = 45;
+  public static final int CTE_FLOAT = 21;
+  public static final int COMP_IGUAL = 27;
+  public static final int DOS_PUNTOS = 42;
   public static final int CONTINUE = 8;
-  public static final int OP_DIV = 28;
-  public static final int COMP_DISTINTO = 30;
-  public static final int NOT = 38;
-  public static final int AND = 36;
-  public static final int OR = 37;
-  public static final int COMP_MENOR = 34;
-  public static final int TYPE_INT = 12;
-  public static final int UMENOS = 48;
+  public static final int OP_DIV = 26;
+  public static final int COMP_DISTINTO = 28;
+  public static final int NOT = 36;
+  public static final int AND = 34;
+  public static final int OR = 35;
+  public static final int COMP_MENOR = 32;
+  public static final int TYPE_INT = 11;
+  public static final int UMENOS = 46;
   public static final int IF = 2;
-  public static final int ID = 21;
+  public static final int ID = 19;
   public static final int EOF = 0;
-  public static final int COMP_MAYOR = 33;
-  public static final int ASIG = 35;
-  public static final int READ_FLOAT = 17;
+  public static final int COMP_MAYOR = 31;
+  public static final int ASIG = 33;
+  public static final int READ_FLOAT = 16;
   public static final int error = 1;
   public static final int PROGRAM = 10;
-  public static final int COMA = 43;
-  public static final int OP_MULT = 27;
-  public static final int PAR_C = 40;
-  public static final int OP_RESTA = 26;
-  public static final int PAR_A = 39;
+  public static final int COMA = 41;
+  public static final int OP_MULT = 25;
+  public static final int PAR_C = 38;
+  public static final int OP_RESTA = 24;
+  public static final int PAR_A = 37;
   public static final int BREAK = 7;
-  public static final int CONST_BOOL = 19;
-  public static final int TYPE_FLOAT = 13;
+  public static final int CONST_BOOL = 18;
+  public static final int TYPE_FLOAT = 12;
   public static final int ALT_WHILE = 6;
-  public static final int DECLARE = 11;
-  public static final int READ_INT = 16;
+  public static final int READ_INT = 15;
   public static final int ELSE = 4;
-  public static final int CTE_STR = 24;
-  public static final int V_DEDENT = 46;
+  public static final int CTE_STR = 22;
+  public static final int V_DEDENT = 44;
   public static final int WHILE = 5;
-  public static final int CTE_INT = 22;
-  public static final int V_INDENT = 45;
-  public static final int OP_SUMA = 25;
-  public static final int COMP_MAYOR_IGUAL = 31;
-  public static final int TYPE_BOOL = 14;
-  public static final int CORCH_C = 42;
-  public static final int READ_BOOL = 18;
-  public static final int CORCH_A = 41;
+  public static final int CTE_INT = 20;
+  public static final int V_INDENT = 43;
+  public static final int OP_SUMA = 23;
+  public static final int COMP_MAYOR_IGUAL = 29;
+  public static final int TYPE_BOOL = 13;
+  public static final int CORCH_C = 40;
+  public static final int READ_BOOL = 17;
+  public static final int CORCH_A = 39;
   public static final int ELIF = 3;
   public static final int PRINT = 9;
   public static final String[] terminalNames = new String[] {
@@ -69,7 +67,6 @@ public class ParserSym {
   "CONTINUE",
   "PRINT",
   "PROGRAM",
-  "DECLARE",
   "TYPE_INT",
   "TYPE_FLOAT",
   "TYPE_BOOL",
@@ -78,7 +75,6 @@ public class ParserSym {
   "READ_FLOAT",
   "READ_BOOL",
   "CONST_BOOL",
-  "CTE_ARREGLO",
   "ID",
   "CTE_INT",
   "CTE_FLOAT",

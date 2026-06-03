@@ -8,16 +8,23 @@ import java.util.List;
 import Lexer.Token;
 import Exception.SyntaxException;
 import java_cup.runtime.Symbol;
+import ast.NodoPrograma;
+
 
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
  */
 public class CompilerService {
 
+    // Ejecuta to do el proceso del compilador paso a paso.
+    // Analiza las palabras, revisa la gramática, y crea todos los archivos finales
+    // (el código LLVM, la imagen del árbol AST y la tabla de símbolos).
     public String compileSource(String sourceCode) {
         StringBuilder out = new StringBuilder();
 
         try {
+            // Antes de parsear, reseteamos la tabla para que no arrastre datos viejos.
+            Parser.tablaSimbolos.clear();
             List<Token> tokens = lex(sourceCode);
 
             out.append("=== ANALISIS LEXICO ===\n");
@@ -28,20 +35,43 @@ public class CompilerService {
             out.append("\n=== ANALISIS SINTACTICO ===\n");
             CupScannerAdapter scanner = new CupScannerAdapter(tokens);
             Parser parser = new Parser(scanner);
-            Symbol result = parser.parse(); // Acá arranca el análisis
+            Symbol result = parser.parse();
 
-            generarArchivoLogs(parser.getLogs());
-
-            if (result != null && result.value != null) {
-                out.append("Resultado: ").append(result.value).append('\n');
+            out.append("\n=== ACCIONES SEMÁNTICAS (ORDEN DE REDUCCIÓN) ===\n");
+            List<String> logs = parser.getLogs();
+            for (String log : logs) {
+                out.append(log).append("\n");
             }
-            out.append("\nCompilacion finalizada sin errores.\n");
 
-            Lexer.tablaSimbolos.generateFile();
-            out.append("\nTabla de símbolos generada en ts.txt\n");
+            java.nio.file.Files.write(java.nio.file.Path.of("logs_reglas.txt"), logs);
+            out.append("\n[OK] Logs guardados en logs_reglas.txt\n");
 
-            // Avisamos en la GUI que también se generaron los logs
-            out.append("Logs de reducción generados en logs_sintacticos.txt\n");
+            // GENERACIÓN DEL AST, ARCHIVO .DOT Y .PNG ---
+            if (result != null && result.value != null) {
+                NodoPrograma raiz = (NodoPrograma) result.value;
+                String dotCode = raiz.generarGrafoDot();
+                java.nio.file.Files.writeString(java.nio.file.Path.of("arbol_ast.dot"), dotCode);
+                out.append("[OK] Árbol AST (Graphviz) generado en arbol_ast.dot\n");
+
+                // --- GENERAR PNG AUTOMÁTICAMENTE ---
+                try {
+                    // Ejecutamos Graphviz desde la consola del sistema operativo
+                    Process p = Runtime.getRuntime().exec("\"C:\\Program Files\\Graphviz\\bin\\dot.exe\" -Tpng arbol_ast.dot -o arbol_ast.png");
+                    p.waitFor(); // Esperamos a que termine de dibujar
+                    out.append("[OK] Imagen generada con éxito en arbol_ast.png\n");
+                } catch (Exception ex) {
+                    out.append("[AVISO] No se pudo generar el PNG. Asegúrese de tener Graphviz instalado y en el PATH.\n");
+                }
+
+                String llvmCode = raiz.generarCodigo();
+                java.nio.file.Files.writeString(java.nio.file.Path.of("programa.ll"), llvmCode);
+                out.append("[OK] Código LLVM IR generado en programa.ll\n");
+
+            }
+
+            parser.tablaSimbolos.generateFile();
+            out.append("[OK] Tabla de símbolos generada en ts.txt\n");
+            out.append("\nCompilación finalizada sin errores.\n");
 
         } catch (SyntaxException e) {
             out.append("\n[ERROR SINTACTICO] ").append(e.getMessage()).append('\n');

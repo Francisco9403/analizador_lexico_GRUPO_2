@@ -1,0 +1,20 @@
+boolean: activo, modo_seguro
+integer: codigo_salida
+
+PROGRAM
+    activo = false
+    modo_seguro = false
+    codigo_salida = 0
+
+    % Prueba de compuertas logicas (AND / OR / NOT)
+    IF activo && !modo_seguro
+        PRINT("Sistema activo y sin modo seguro.")
+        codigo_salida = 1
+    ELIF activo || modo_seguro
+        PRINT("Sistema parcialmente protegido.")
+        codigo_salida = 2
+    ELSE
+        PRINT("Sistema inactivo.")
+        codigo_salida = -1
+
+    PRINT("Codigo final:", codigo_salida)

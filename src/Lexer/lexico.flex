@@ -1,5 +1,4 @@
 package Lexer;
-import TablaSimbolo.TablaSimbolo;
 
 /**
  * Analizador Léxico para el TPI - Grupo 2
@@ -9,13 +8,15 @@ import TablaSimbolo.TablaSimbolo;
 %public
 %class Lexer
 %unicode
+%ignorecase
 %type Token
 %line
 %column
+%state INDENTANDO
+%state CADENA
+%state COMENTARIO
 
 %{
-
-    public static TablaSimbolo tablaSimbolos = new TablaSimbolo();
 
     /* Variables para strings y comentarios */
     StringBuffer string = new StringBuffer();
@@ -65,7 +66,7 @@ import TablaSimbolo.TablaSimbolo;
 
 /* Macros */
 LineTerminator = \r|\n|\r\n
-WhiteSpace     = [ \t\f]
+WhiteSpace = [ \t]+
 
 /* Letras Unicode para soportar tildes y eñes según el estándar */
 Letter         = [:letter:]
@@ -76,10 +77,6 @@ DecIntegerLiteral = 0 | [1-9][0-9]*
 /* Formatos: 99.99 , 99. , .999 */
 FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
-%state INDENTANDO
-%state CADENA
-%state COMENTARIO
-%state ARREGLO
 
 %%
 <INDENTANDO> {
@@ -87,22 +84,26 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   \t   { espaciosActuales += 4; }
   {LineTerminator} { espaciosActuales = 0; }
 
+  /* Si la línea empieza con un comentario, saltamos a procesarlo
+     ignorando el nivel de indentación actual. */
+  "%"  { yybegin(YYINITIAL); yypushback(1); }
+  "{*" { yybegin(COMENTARIO); }
+
   [^ \t\r\n] {
       int nivelAnterior = nivelesIndentacion.peek();
-      boolean lineaContinuacionConComa = ",".equals(yytext());
 
-      if (!lineaContinuacionConComa) {
-          if (espaciosActuales > nivelAnterior) {
-              nivelesIndentacion.push(espaciosActuales);
-              colaTokens.add(token("V_INDENT"));
-          }
-          else if (espaciosActuales < nivelAnterior) {
-              while (espaciosActuales < nivelesIndentacion.peek()) {
-                  nivelesIndentacion.pop();
-                  colaTokens.add(token("V_DEDENT"));
-              }
+      /* Eliminamos el chequeo de la coma para simplificar la lógica */
+      if (espaciosActuales > nivelAnterior) {
+          nivelesIndentacion.push(espaciosActuales);
+          colaTokens.add(token("V_INDENT"));
+      }
+      else if (espaciosActuales < nivelAnterior) {
+          while (espaciosActuales < nivelesIndentacion.peek()) {
+              nivelesIndentacion.pop();
+              colaTokens.add(token("V_DEDENT"));
           }
       }
+
       yypushback(1);
       yybegin(YYINITIAL);
 
@@ -118,7 +119,6 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 
   /* Palabras Reservadas */
   "PROGRAM"            { return token("PROGRAM", yytext()); }
-  "DECLARE"            { return token("DECLARE", yytext()); }
   "IF"                 { return token("IF", yytext()); }
   "ELIF"               { return token("ELIF", yytext()); }
   "ELSE"               { return token("ELSE", yytext()); }
@@ -147,21 +147,15 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "suma_cumulativa"    { return token("SUMA_ACUM", yytext()); }
 
   /* Identificadores y Números*/
-
 {Identifier} {
-    // Agregamos el ID a la tabla. Por ahora sin tipo (se lo dará el Parser)
-    tablaSimbolos.addId(yytext(), "ID");
     return token("ID", yytext());
 }
 
 {DecIntegerLiteral} {
-    // Las constantes se agregan con su valor y longitud
-    tablaSimbolos.addConstant("_" + yytext(), "CTE_INT", yytext(), String.valueOf(yytext().length()));
     return token("CTE_INT", yytext());
 }
 
 {FloatLiteral} {
-    tablaSimbolos.addConstant("_" + yytext(), "CTE_FLOAT", yytext(), String.valueOf(yytext().length()));
     return token("CTE_FLOAT", yytext());
 }
 
@@ -186,20 +180,10 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
   "!"                  { return token("NOT", yytext()); }
 
    /* Puntuación y Delimitadores */
-   "("                  { return token("PAR_A", yytext()); }
-   ")"                  { return token("PAR_C", yytext()); }
-   "["                  {
-                          if ("ASIG".equals(ultimoTokenSignificativo) || "COMA".equals(ultimoTokenSignificativo)) {
-                              string.setLength(0);
-                              string_yyline = this.yyline;
-                              string_yycolumn = this.yycolumn;
-                              string.append("[");
-                              yybegin(ARREGLO);
-                          } else {
-                              return token("CORCH_A", yytext());
-                          }
-                        }
-   "]"                  { return token("CORCH_C", yytext()); }
+   "("  { return token("PAR_A", yytext()); }
+   ")"  { return token("PAR_C", yytext()); }
+   "["  { return token("CORCH_A", yytext()); }
+   "]"  { return token("CORCH_C", yytext()); }
    ","                  { return token("COMA", yytext()); }
    ":"                  { return token("DOS_PUNTOS", yytext()); }
 
@@ -219,35 +203,23 @@ FloatLiteral      = ({Digit}+ "." {Digit}*) | ("." {Digit}+)
 }
 
 <COMENTARIO> {
-  "*}"                 { yybegin(YYINITIAL); }
-  [^]                  { /* Ignorar contenido */ }
-  <<EOF>>              { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
-}
-
-<ARREGLO> {
-  "]"                  {
-                           yybegin(YYINITIAL);
-                           String arreglo = string.append("]").toString();
-                           tablaSimbolos.addConstant("_" + arreglo, "CTE_ARREGLO", arreglo, String.valueOf(arreglo.length()));
-                           return token("CTE_ARREGLO", arreglo);
-                       }
-  [^]                  { string.append(yytext()); }
-  <<EOF>>              { throw new Error("Error Léxico: Arreglo sin cerrar al final del archivo."); }
+  "*}"      { yybegin(YYINITIAL); }
+  <<EOF>>   { throw new Error("Error Léxico: Comentario multilínea sin cerrar."); }
+  [^]       { /* Ignorar contenido */ }
 }
 
 <CADENA> {
-  \"                   {
-                           yybegin(YYINITIAL);
-                           String cadena = string.toString();
-                           tablaSimbolos.addConstant("_" + cadena, "CTE_STR", cadena, String.valueOf(cadena.length()));
-                           return token("CTE_STR", cadena);
-                       }
-  "\\\""               { string.append("\""); }
-  "\\n"                { string.append("\n"); }
-  "\\t"                { string.append("\t"); }
-  "\\\\"               { string.append("\\"); }
-  [^]                  { string.append(yytext()); }
-  <<EOF>>              { throw new Error("Error Léxico: Cadena sin cerrar al final del archivo."); }
+  \"       {
+            yybegin(YYINITIAL);
+            String cadena = string.toString();
+            return token("CTE_STR", cadena);
+           }
+  "\\\""   { string.append("\""); }
+  "\\n"    { string.append("\n"); }
+  "\\t"    { string.append("\t"); }
+  "\\\\"   { string.append("\\"); }
+  <<EOF>>  { throw new Error("Error Léxico: Cadena sin cerrar al final del archivo."); }
+  [^]      { string.append(yytext()); }
 }
 
 /* Fallback de errores */

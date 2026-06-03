@@ -34,13 +34,31 @@ public class TablaSimbolo {
         }
     }
 
+    public String getType(String name) {
+        if (exists(name)) {
+            return table.get(name).type;
+        }
+        return "UNKNOWN"; // O lanza una excepción si prefieres
+    }
+
     public void generateFile() {
         try (PrintWriter writer = new PrintWriter(new FileWriter("ts.txt"))) {
-            writer.printf("%-20s | %-15s | %-15s | %-20s | %-5s%n", "NOMBRE", "TOKEN", "TIPO", "VALOR", "LONG");
-            writer.println("---------------------------------------------------------------------------------------");
+            int maxNombre = 20, maxToken = 15, maxTipo = 15, maxValor = 20;
+
             for (Symbol s : table.values()) {
-                writer.printf("%-20s | %-15s | %-15s | %-20s | %-5s%n",
-                        s.name, s.token, s.type, s.value, s.length);
+                maxNombre = Math.max(maxNombre, s.name.length());
+                maxToken = Math.max(maxToken, s.token.length());
+                maxTipo = Math.max(maxTipo, s.type.length());
+                maxValor = Math.max(maxValor, s.value.length());
+            }
+
+            String format = "| %-" + maxNombre + "s | %-" + maxToken + "s | %-" + maxTipo + "s | %-" + maxValor + "s | %-5s |%n";
+
+            writer.printf(format, "NOMBRE", "TOKEN", "TIPO", "VALOR", "LONG");
+            writer.println("-".repeat(maxNombre + maxToken + maxTipo + maxValor + 25));
+
+            for (Symbol s : table.values()) {
+                writer.printf(format, s.name, s.token, s.type, s.value, s.length);
             }
         } catch (IOException e) {
             System.err.println("Error al generar ts.txt: " + e.getMessage());
@@ -52,5 +70,12 @@ public class TablaSimbolo {
         Symbol(String n, String t, String ty, String v, String l) {
             name = n; token = t; type = ty; value = v; length = l;
         }
+    }
+
+    // Agregá este método en TablaSimbolo.java
+    public void clear() {
+        // Reemplazá 'this.mapaDeSimbolos' por el nombre del HashMap o la lista
+        // que uses internamente para guardar las variables.
+        this.table.clear();
     }
 }

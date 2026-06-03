@@ -5,15 +5,22 @@ import Exception.SyntaxException;
 import java.util.ArrayList;
 import Lexer.Lexer;
 import TablaSimbolo.TablaSimbolo;
+import ast.*;
+import service.TypeChecker;
+
 class Parser;
 
 parser code {:
-    TablaSimbolo tablaSimbolos = Lexer.tablaSimbolos;
-    private java.util.List<String> listaLogs = new java.util.ArrayList<>();
-    public void printLog(String regla) {
-        listaLogs.add("[PARSER LOG] " + regla);
+    public static TablaSimbolo tablaSimbolos = new TablaSimbolo();
 
-        System.out.println("[PARSER LOG] " + regla);
+    private int reglaCount = 1; // Contador secuencial
+    private java.util.List<String> listaLogs = new java.util.ArrayList<>();
+
+    public void printLog(String regla) {
+        // Formateamos con el número de paso (ej: 001. Regla: ...)
+        String mensaje = String.format("%03d. Regla aplicada: %s", reglaCount++, regla);
+        listaLogs.add(mensaje);
+        System.out.println(mensaje);
     }
 
     public java.util.List<String> getLogs() {
@@ -35,9 +42,9 @@ parser code {:
 :};
 
 terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
-terminal PROGRAM, DECLARE;
+terminal PROGRAM;
 terminal String TYPE_INT, TYPE_FLOAT, TYPE_BOOL, TYPE_ARRAY;
-terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL, CTE_ARREGLO;
+terminal String READ_INT, READ_FLOAT, READ_BOOL, CONST_BOOL;
 terminal String ID, CTE_INT, CTE_FLOAT, CTE_STR;
 terminal OP_SUMA, OP_RESTA, OP_MULT, OP_DIV;
 terminal COMP_IGUAL, COMP_DISTINTO, COMP_MAYOR_IGUAL, COMP_MENOR_IGUAL, COMP_MAYOR, COMP_MENOR;
@@ -48,351 +55,465 @@ terminal UMENOS;
 
 
 /* --- DECLARACION DE NO TERMINALES --- */
-nonterminal String program;
+nonterminal NodoPrograma program;
 nonterminal String tipo;
-nonterminal String seccion_declaracion, bloque_declaraciones, declaracion;
+nonterminal NodoC cte_string;
+nonterminal ArrayList<NodoC> bloque_declaraciones, declaracion;
 nonterminal ArrayList<String> lista_ids;
-nonterminal String bloque_sentencias, sentencia, seccion_sentencias;
-nonterminal String asignacion, impresion;
-nonterminal String sentencia_if, sentencia_while;
-nonterminal String expresion, lista_expresiones;
+nonterminal ArrayList<NodoC> bloque_sentencias, seccion_sentencias, lista_sentencias, bloque;
+nonterminal ArrayList<NodoC> elif_part, else_part, alt_while_part, lista_expresiones;
+nonterminal NodoC sentencia, asignacion, impresion, sentencia_if, sentencia_while, sentencia_control;
+nonterminal NodoC expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
+nonterminal NodoC comparacion, valorLiteral, arreglo_literal, sum_acum;
 
-nonterminal String expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, sum_acum, expresionMenosU;
-nonterminal String comparacion, valorLiteral, lvalue;
-nonterminal String sentencia_control, bloque, lista_sentencias;
-nonterminal String alt_while_part, elif_part, else_part;
 start with program;
 
 /* --------------------------------------------------------
    1. ESTRUCTURA PRINCIPAL DEL PROGRAMA
    -------------------------------------------------------- */
-program ::= seccion_declaracion:bd seccion_sentencias:bs
-            {:
-            parser.printLog("program ::= seccion_declaracion seccion_sentencias");
-            RESULT = bd + "\n" + bs; :}
-            | seccion_sentencias:bs
-            {:
-             parser.printLog("program ::= seccion_sentencias");
-             RESULT= bs; :}
-            ;
+program ::= bloque_declaraciones:bd seccion_sentencias:bs {:
+            parser.printLog("Regla 1.0.0 program ::= bloque_declaraciones seccion_sentencias");
+            RESULT = new NodoPrograma(bd, bs);
+        :}
+        | seccion_sentencias:bs {:
+             parser.printLog("Regla 1.0.1 program ::= seccion_sentencias");
+             RESULT = new NodoPrograma(new ArrayList<>(), bs);
+        :};
 
 /* --------------------------------------------------------
    2. ZONA DE DECLARACION DE VARIABLES
    -------------------------------------------------------- */
-seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones:bd V_DEDENT
-                    {:
-                        parser.printLog("seccion_declaracion ::= DECLARE V_INDENT bloque_declaraciones V_DEDENT");
-                        RESULT = bd;
-                    :}
-                    | DECLARE {:
-                        parser.printLog("seccion_declaracion ::= DECLARE (Seccion vacia)");
-                        RESULT = "";
-                    :};
 
-seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT
-                    {:
-                        parser.printLog("seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
-                        RESULT = bs;
+seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT {:
+                      parser.printLog("Regla 1.1.0 seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias V_DEDENT");
+                      RESULT = bs;
                     :}
                     | PROGRAM {:
-                        parser.printLog("seccion_sentencias ::= PROGRAM (Seccion vacia)");
-                        RESULT = "";
+                      parser.printLog("Regla 1.1.1 seccion_sentencias ::= PROGRAM (Seccion vacia)");
+                      RESULT = new ArrayList<NodoC>();
+                    :}
+                    | /* vacio - Sin sentencias */ {:
+                      parser.printLog("Regla 1.1.2 seccion_sentencias ::= ( Sin sección PROGRAM )");
+                      RESULT = new ArrayList<NodoC>();
                     :};
 
-bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d{:
-                        parser.printLog("bloque_declaraciones ::= bloque_declaraciones declaracion");
-                        RESULT = bd + "\n" + d;
-                      :}| declaracion:d {:
-                        parser.printLog("bloque_declaraciones ::= declaracion");
+bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
+                        parser.printLog("Regla 1.2.0 bloque_declaraciones ::= bloque_declaraciones declaracion");
+                        bd.addAll(d);
+                        RESULT = bd;
+                      :}
+                      | declaracion:d {:
+                        parser.printLog("Regla 1.2.1 bloque_declaraciones ::= declaracion");
                         RESULT = d;
-                       :} ;
+                      :};
 
 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
-            // Recorremos la lista y seteamos el tipo en la tabla
-            for (String id : l) {
-                tablaSimbolos.setType(id, t);
+            parser.printLog("Regla 1.3.0 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l");
+            ArrayList<NodoC> decls = new ArrayList<>();
+            for(String id : l) {
+                if (!tablaSimbolos.exists(id)) {
+                    tablaSimbolos.addId(id, "ID");
+                    tablaSimbolos.setType(id, t);
+                    parser.printLog("Variable declarada: " + id + " de tipo " + t);
+                    decls.add(new NodoDeclaracion(t, id));
+                } else {
+                    System.err.println("Error semántico: " + id + " ya existe.");
+                }
             }
-            parser.printLog("declaracion ::= tipo DOS_PUNTOS lista_ids");
-            RESULT = t + " : " + l.toString();
+            RESULT = decls;
         :};
 
 lista_ids ::= lista_ids:l COMA ID:id {:
-            parser.printLog("lista_ids ::= lista_ids COMA ID");
+            parser.printLog("Regla 1.4.0 lista_ids ::= lista_ids COMA ID");
             l.add(id);
             RESULT = l;
         :}
         | ID:id {:
-            parser.printLog("lista_ids ::= ID");
+            parser.printLog("Regla 1.4.1 lista_ids ::= ID");
             ArrayList<String> lista = new ArrayList<>();
             lista.add(id);
             RESULT = lista;
         :};
 
-tipo ::= TYPE_INT    {: parser.printLog("tipo ::= TYPE_INT"); RESULT = "INT"; :}
-       | TYPE_FLOAT  {: parser.printLog("tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
-       | TYPE_BOOL   {: parser.printLog("tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
-       | TYPE_ARRAY  {: parser.printLog("tipo ::= TYPE_ARRAY"); RESULT = "FLOAT_ARRAY"; :}
-       ;
+tipo ::= TYPE_INT {: parser.printLog("Regla 1.5.0 tipo ::= TYPE_INT"); RESULT = "INT"; :}
+       | TYPE_FLOAT {: parser.printLog("Regla 1.5.1 tipo ::= TYPE_FLOAT"); RESULT = "FLOAT"; :}
+       | TYPE_BOOL {: parser.printLog("Regla 1.5.2 tipo ::= TYPE_BOOL"); RESULT = "BOOL"; :}
+       | TYPE_ARRAY CORCH_A CTE_INT:size CORCH_C {:
+            parser.printLog("Regla 1.5.3 tipo ::= TYPE_ARRAY [ CTE_INT ]");
+            RESULT = "FLOAT_ARRAY[" + size + "]";
+       :};
 
 /* --------------------------------------------------------
    3. ZONA DE SENTENCIAS (Cuerpo del programa)
    -------------------------------------------------------- */
 
-bloque_sentencias ::= bloque_sentencias:bs sentencia:s{:
-                   parser.printLog("bloque_sentencias ::= bloque_sentencias sentencia");
-                   RESULT = bs + "\n" + s;
-                   :}| sentencia:s {:
-                   parser.printLog("bloque_sentencias ::= sentencia");
-                   RESULT = s;
-                    :};
+bloque_sentencias ::= bloque_sentencias:bs sentencia:s {:
+                   parser.printLog("Regla 2.0.0 bloque_sentencias ::= bloque_sentencias sentencia");
+                   bs.add(s); RESULT = bs;
+                   :}
+                 | sentencia:s {:
+                   parser.printLog("Regla 2.0.1 bloque_sentencias ::= sentencia");
+                   ArrayList<NodoC> lista = new ArrayList<>(); lista.add(s); RESULT = lista;
+                 :};
 
-sentencia ::= asignacion:a{:
-            parser.printLog("sentencia ::= asignacion");
-            RESULT= a;
-          :}| impresion:i {:
-            parser.printLog("sentencia ::= impresion");
-            RESULT= i;
-          :}| sentencia_if:si {:
-            parser.printLog("sentencia ::= sentencia_if");
-            RESULT= si;
-          :}| sentencia_while:sw{:
-            parser.printLog("sentencia ::= sentencia_while");
-            RESULT= sw;
-          :}| sentencia_control:sc{:
-            parser.printLog("sentencia ::= sentencia_control");
-            RESULT= sc;
-          :};
+sentencia ::= asignacion:a {: parser.printLog("Regla 2.1.0 sentencia ::= asignacion"); RESULT= a; :}
+            | impresion:i {: parser.printLog("Regla 2.1.1 sentencia ::= impresion"); RESULT= i; :}
+            | sentencia_if:si {: parser.printLog("Regla 2.1.2 sentencia ::= sentencia_if"); RESULT= si; :}
+            | sentencia_while:sw {: parser.printLog("Regla 2.1.3 sentencia ::= sentencia_while"); RESULT= sw; :}
+            | sentencia_control:sc {: parser.printLog("Regla 2.1.4 sentencia ::= sentencia_control"); RESULT= sc; :};
 
-asignacion ::= lvalue:lv ASIG expresionOr:e {:
-                parser.printLog("asignacion ::= lvalue ASIG expresionOr");
-                RESULT = lv + " = " + e;
-              :}
-              | lvalue:lv ASIG CORCH_A lista_expresiones:le CORCH_C {:
-                parser.printLog("asignacion ::= lvalue ASIG CORCH_A lista_expresiones CORCH_C");
-                RESULT = lv + " = [" + le + "]";
-              :}
-              | lvalue:lv ASIG CORCH_A CORCH_C {:
-                parser.printLog("asignacion ::= lvalue ASIG CORCH_A CORCH_C (empty array)");
-                RESULT = lv + " = []";
-              :};
+asignacion ::= ID:id ASIG expresionOr:e {:
+    if (!Parser.tablaSimbolos.exists(id)) {
+        throw new Exception("Error: Variable '" + id + "' no declarada.");
+    }
 
-lvalue ::= ID:id {:
-           parser.printLog("lvalue ::= ID");
-           RESULT = id; :}
-         | ID:id CORCH_A expresionOr:index CORCH_C {:
-           parser.printLog("lvalue ::= ID CORCH_A expresionOr CORCH_C");
-           RESULT = id + "[" + index + "]"; :}
-         ;
+    String tipoVar = Parser.tablaSimbolos.getType(id);
+
+    if (!TypeChecker.esAsignacionValida(tipoVar, e.getTipoDato())) {
+        throw new Exception("Error de tipos: no se puede asignar " + e.getTipoDato() + " a " + id + " (" + tipoVar + ")");
+    }
+
+    NodoAsignacion nodo = new NodoAsignacion(new NodoIdentificador(id), e);
+    nodo.setTipoDato(tipoVar); // Decoramos el nodo
+    RESULT = nodo;
+:};
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A expresionOr PAR_C");
-                RESULT = "PRINT(" + e + ")";
+                parser.printLog("Regla 2.4.0 impresion ::= PRINT PAR_A expresionOr PAR_C");
+                RESULT = new NodoImpresion(e);
               :}
-            | PRINT PAR_A CTE_STR:s COMA expresionOr:e PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
-                RESULT = "PRINT(\"" + s + "\", " + e + ")";
-              :}
-            | PRINT PAR_A CTE_STR:s PAR_C {:
-                parser.printLog("impresion ::= PRINT PAR_A CTE_STR PAR_C");
-                RESULT = "PRINT(\"" + s + "\")";
-              :};
+            | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
+                parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
+                // s.getEtiqueta() devuelve el string interno
+                RESULT = new NodoImpresion(s.getEtiqueta(), e);
+            :};
 
-bloque ::= V_INDENT lista_sentencias:ls V_DEDENT{:
-                  parser.printLog("bloque ::= V_INDENT lista_sentencias V_DEDENT");
-                  RESULT = ls;
-                  :};
+bloque ::= V_INDENT lista_sentencias:ls V_DEDENT {:
+         parser.printLog("Regla 2.5.0 bloque ::= V_INDENT lista_sentencias V_DEDENT");
+         RESULT = ls;
+         :};
 
 lista_sentencias ::= lista_sentencias:ls sentencia:s{:
-                  parser.printLog("lista_sentencias ::= lista_sentencias sentencia");
-                  RESULT= ls + "\n" + s;:}
+                  parser.printLog("Regla 2.6.0 lista_sentencias ::= lista_sentencias sentencia");
+                  ls.add(s); RESULT= ls;
+                  :}
                   | sentencia:s {:
-                  parser.printLog("lista_sentencias ::= sentencia");
-                  RESULT = s;:}
-                  ;
+                  parser.printLog("Regla 2.6.1 lista_sentencias ::= sentencia");
+                  ArrayList<NodoC> ls = new ArrayList<>(); ls.add(s); RESULT = ls;
+                  :};
 
-sentencia_control ::= BREAK    {:
-                    parser.printLog("sentencia_control ::= BREAK");
-                    RESULT = "BREAK";    :}
+sentencia_control ::= BREAK {:
+                    parser.printLog("Regla 2.7.0 sentencia_control ::= BREAK");
+                    RESULT = new NodoControl("BREAK");
+                    :}
                     | CONTINUE {:
-                    parser.printLog("sentencia_control ::= CONTINUE");
-                    RESULT = "CONTINUE"; :};
+                    parser.printLog("Regla 2.7.1 sentencia_control ::= CONTINUE");
+                    RESULT = new NodoControl("CONTINUE");
+                    :};
 
-sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es
-               {:
-                  parser.printLog("sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = "IF" + c + " {\n" + b + "\n}" + el + es; :};
+sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {:
+                  parser.printLog("Regla 2.8.0 sentencia_if ::= IF expresionOr bloque elif_part else_part");
+                  RESULT = new NodoIf(c, b, el, es);
+               :};
 
-sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw
-                  {:
-                     parser.printLog("sentencia_while ::= WHILE expresionOr bloque alt_while_part");
-                     RESULT = "WHILE" + c + " {\n" + b + "\n}" + aw; :};
+sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {:
+                   parser.printLog("Regla 2.9.0 sentencia_while ::= WHILE expresionOr bloque alt_while_part");
+                   RESULT = new NodoWhile(c, b, aw);
+               :};
 
-elif_part ::= elif_part:el ELIF expresionOr:c bloque:b
-            {:
-               parser.printLog("elif_part ::= elif_part ELIF expresionOr bloque");
-               RESULT = el + "\nELIF" + c + " {\n" + b + "\n}"; :}
-            | /* vacio */
-            {:
-               parser.printLog("elif_part ::= (vacio)");
-               RESULT = ""; :}
-            ;
+elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {:
+             parser.printLog("Regla 2.10.0 elif_part ::= elif_part ELIF expresionOr bloque");
+             el.add(new NodoIf(c, b, new ArrayList<>(), new ArrayList<>()));
+             RESULT = el;
+            :}
+            | /* vacio */ {:
+             parser.printLog("Regla 2.10.1 elif_part ::= (vacio)");
+             RESULT = new ArrayList<NodoC>();
+            :};
 
-else_part ::= ELSE bloque:b
-            {:
-               parser.printLog("else_part ::= ELSE bloque");
-               RESULT = "\nELSE {\n" + b + "\n}"; :}
-            | /* vacio */
-            {:
-               parser.printLog("else_part ::= (vacio)");
-               RESULT = ""; :}
-            ;
+else_part ::= ELSE bloque:b {:
+             parser.printLog("Regla 2.11.0 else_part ::= ELSE bloque");
+             RESULT = b;
+            :}
+            | /* vacio */ {:
+             parser.printLog("Regla 2.11.1 else_part ::= (vacio)");
+             RESULT = new ArrayList<NodoC>();
+            :};
 
-alt_while_part ::= alt_while_part:aw ALT_WHILE PAR_A expresionOr:c PAR_C bloque:b
-                 {:
-                    parser.printLog("alt_while_part ::= alt_while_part ALT_WHILE (expresionOr) bloque");
-                    RESULT = aw + "\nALT_WHILE(" + c + ") {\n" + b + "\n}"; :}
-                 | /* vacio */
-                 {:
-                    parser.printLog("alt_while_part ::= (vacio)");
-                    RESULT = ""; :}
-                 ;
+alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
+                  parser.printLog("Regla 2.12.0 alt_while_part ::= alt_while_part ALT_WHILE expresionOr bloque");
+                  aw.add(new NodoWhile(c, b, new ArrayList<>()));
+                  RESULT = aw;
+                 :}
+                 | /* vacio */ {:
+                  parser.printLog("Regla 2.12.1 alt_while_part ::= (vacio)");
+                  RESULT = new ArrayList<NodoC>();
+                 :};
+
 /* --------------------------------------------------------
    4. EXPRESIONES Y MATEMATICAS
    -------------------------------------------------------- */
 
 expresionOr::= expresionAnd:ea OR expresionOr:eo {:
-              parser.printLog("expresionOr ::= expresionAnd OR expresionOr");
-              RESULT = ea + " || " + eo; :}
+              parser.printLog("Regla 3.0.0 expresionOr ::= expresionAnd OR expresionOr");
+              RESULT = new NodoOperacion("||", ea, eo);
+            :}
             | expresionAnd:ea {:
-              parser.printLog("expresionOr ::= expresionAnd");
-              RESULT = ea; :}
-            ;
+              parser.printLog("Regla 3.0.1 expresionOr ::= expresionAnd");
+              RESULT = ea;
+            :};
 
 expresionAnd::= expresionNot:en AND expresionAnd:ea {:
-              parser.printLog("expresionAnd ::= expresionNot AND expresionAnd");
-              RESULT = en + " && " + ea; :}
+              parser.printLog("Regla 3.1.0 expresionAnd ::= expresionNot AND expresionAnd");
+              RESULT = new NodoOperacion("&&", en, ea);
+            :}
             | expresionNot:en {:
-              parser.printLog("expresionAnd ::= expresionNot");
-              RESULT = en; :}
-            ;
+              parser.printLog("Regla 3.1.1 expresionAnd ::= expresionNot");
+              RESULT = en;
+            :};
 
 expresionNot ::= NOT expresionNot:en {:
-               parser.printLog("expresionNot ::= NOT expresionNot");
-               RESULT = "!" + en; :}
+               parser.printLog("Regla 3.2.0 expresionNot ::= NOT expresionNot");
+               RESULT = new NodoUnario("!", en);
+             :}
              | comparacion:c {:
-               parser.printLog("expresionNot ::= comparacion");
-               RESULT= c; :}
-             ;
+               parser.printLog("Regla 3.2.1 expresionNot ::= comparacion");
+               RESULT= c;
+             :};
 
-expresionSumRes::=expresionSumRes:es OP_SUMA expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionSumRes OP_SUMA expresionMultDiv");
-                RESULT = es + " + " + em; :}
-                | expresionSumRes:es OP_RESTA expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionSumRes OP_RESTA expresionMultDiv");
-                RESULT = es + " - " + em; :}
+expresionSumRes ::= expresionSumRes:e1 OP_SUMA expresionMultDiv:e2 {:
+                    parser.printLog("Regla: expresionSumRes ::= expresionSumRes OP_SUMA expresionMultDiv");
+                    String tipoRes = TypeChecker.getTipoResultadoOperacion(e1.getTipoDato(), e2.getTipoDato());
+                    if (tipoRes.equals("ERROR")) {
+                        throw new Exception("Error de tipos: No se puede sumar " + e1.getTipoDato() + " con " + e2.getTipoDato());
+                    }
+                    NodoOperacion nodoSuma = new NodoOperacion("+",e1, e2);
+                    nodoSuma.setTipoDato(tipoRes);
+                    RESULT = nodoSuma;
+                  :}
+                  | expresionSumRes:e1 OP_RESTA expresionMultDiv:e2 {:
+                    parser.printLog("Regla: expresionSumRes ::= expresionSumRes OP_RESTA expresionMultDiv");
+
+                    String tipoRes = TypeChecker.getTipoResultadoOperacion(e1.getTipoDato(), e2.getTipoDato());
+                    if (tipoRes.equals("ERROR")) {
+                        throw new Exception("Error de tipos: No se puede restar " + e1.getTipoDato() + " con " + e2.getTipoDato());
+                    }
+
+                    NodoOperacion nodoResta = new NodoOperacion("-",e1, e2);
+                    nodoResta.setTipoDato(tipoRes); // <-- Guardamos el tipo evaluado
+                    RESULT = nodoResta;
+                  :}
                 | expresionMultDiv:em {:
-                parser.printLog("expresionSumRes ::= expresionMultDiv");
-                RESULT = em; :}
-                ;
+                parser.printLog("Regla 3.3.2 expresionSumRes ::= expresionMultDiv");
+                RESULT = em;
+                :};
 
-expresionMultDiv::=expresionMultDiv:em OP_MULT expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_MULT expresionMenosU");
-                 RESULT = em + " * " + emu; :}
-                 | expresionMultDiv:em OP_DIV expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMultDiv OP_DIV expresionMenosU");
-                 RESULT = em + " / " + emu; :}
+expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
+                    parser.printLog("Regla: expresionMultDiv ::= expresionMultDiv OP_MULT expresionMenosU");
+
+                    String tipoRes = TypeChecker.getTipoResultadoOperacion(e1.getTipoDato(), e2.getTipoDato());
+                    if (tipoRes.equals("ERROR")) {
+                        throw new Exception("Error de tipos: No se puede multiplicar " + e1.getTipoDato() + " con " + e2.getTipoDato());
+                    }
+
+                    NodoOperacion nodo = new NodoOperacion("*",e1, e2);
+                    nodo.setTipoDato(tipoRes); // <-- Asignamos tipo
+                    RESULT = nodo;
+                  :}
+                  | expresionMultDiv:e1 OP_DIV expresionMenosU:e2 {:
+                    parser.printLog("Regla: expresionMultDiv ::= expresionMultDiv OP_DIV expresionMenosU");
+
+                    String tipoRes = TypeChecker.getTipoResultadoOperacion(e1.getTipoDato(), e2.getTipoDato());
+                    if (tipoRes.equals("ERROR")) {
+                        throw new Exception("Error de tipos: No se puede dividir " + e1.getTipoDato() + " con " + e2.getTipoDato());
+                    }
+
+                    NodoOperacion nodo = new NodoOperacion("/", e1, e2);
+                    nodo.setTipoDato(tipoRes); // <-- Asignamos tipo
+                    RESULT = nodo;  :}
                  | expresionMenosU:emu {:
-                 parser.printLog("expresionMultDiv ::= expresionMenosU");
-                 RESULT = emu; :}
-                 ;
+                 parser.printLog("Regla 3.4.2 expresionMultDiv ::= expresionMenosU");
+                 RESULT = emu;
+                 :};
 
 comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
-              RESULT = es1 + " == " + es2; :}
+              parser.printLog("Regla 3.5.0 comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
+              NodoOperacion nodoIgual = new NodoOperacion("==", es1, es2);
+              nodoIgual.setTipoDato("BOOL");
+              RESULT = nodoIgual;
+              :}
               | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
-              RESULT = es1 + " != " + es2; :}
+              parser.printLog("Regla 3.5.1 comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
+              NodoOperacion nodoDistinto = new NodoOperacion("!=", es1, es2);
+              nodoDistinto.setTipoDato("BOOL");
+              RESULT = nodoDistinto;
+              :}
               | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
-              RESULT = es1 + " > " + es2; :}
+              parser.printLog("Regla 3.5.2 comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
+              NodoOperacion nodoMayor = new NodoOperacion(">", es1, es2);
+              nodoMayor.setTipoDato("BOOL");
+              RESULT = nodoMayor;
+              :}
               | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
-              RESULT = es1 + " < " + es2; :}
+              parser.printLog("Regla 3.5.3 comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
+              NodoOperacion nodoMenor = new NodoOperacion("<", es1, es2);
+              nodoMenor.setTipoDato("BOOL");
+              RESULT = nodoMenor;
+              :}
               | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
-              RESULT = es1 + " >= " + es2; :}
+              parser.printLog("Regla 3.5.4 comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
+              NodoOperacion nodoMayorIgual = new NodoOperacion(">=", es1, es2);
+              nodoMayorIgual.setTipoDato("BOOL");
+              RESULT = nodoMayorIgual;
+              :}
               | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {:
-              parser.printLog("comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
-              RESULT = es1 + " <= " + es2; :}
+              parser.printLog("Regla 3.5.5 comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
+              NodoOperacion nodoMenorIgual = new NodoOperacion("<=", es1, es2);
+              nodoMenorIgual.setTipoDato("BOOL");
+              RESULT = nodoMenorIgual;
+              :}
               | expresionSumRes:es {:
-              parser.printLog("comparacion ::= expresionSumRes");
-              RESULT = es; :}
-              ;
+              parser.printLog("Regla 3.5.6 comparacion ::= expresionSumRes");
+              RESULT = es;
+              :};
 
-
-expresionMenosU ::= OP_RESTA expresion:e {:
-                parser.printLog("expresionMenosU ::= OP_RESTA expresion");
-                RESULT = "-" + e; :} %prec UMENOS
+expresionMenosU ::= OP_RESTA expresionMenosU:e {:
+                parser.printLog("Regla 3.6.0 expresionMenosU ::= OP_RESTA expresionMenosU");
+                NodoUnario nodo = new NodoUnario("-", e);
+                nodo.setTipoDato(e.getTipoDato());
+                RESULT = nodo;
+                :} %prec UMENOS
                 | expresion:e {:
-                parser.printLog("expresionMenosU ::= expresion");
-                RESULT = e; :}
-                ;
+                parser.printLog("Regla 3.6.1 expresionMenosU ::= expresion");
+                RESULT = e;
+                :};
 
 /* --- Dentro de la sección de EXPRESIONES --- */
 expresion ::= PAR_A expresionOr:e PAR_C {:
-            parser.printLog("expresion ::= PAR_A expresionOr PAR_C");
-            RESULT = "(" + e + ")"; :}
+            parser.printLog("Regla 3.7.0 expresion ::= PAR_A expresionOr PAR_C");
+            RESULT = e;
+            :}
             | ID:id {:
-            parser.printLog("expresion ::= ID");
-            RESULT = id; :}
+        parser.printLog("Regla 3.7.1 expresion ::= ID");
+        if (!Parser.tablaSimbolos.exists(id)) {
+            throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
+        }
+        NodoIdentificador nodo = new NodoIdentificador(id);
+        nodo.setTipoDato(Parser.tablaSimbolos.getType(id));
+        RESULT = nodo;
+        :}
             | valorLiteral:vl {:
-            parser.printLog("expresion ::= valorLiteral");
-            RESULT = vl; :}
-            | ID:id CORCH_A expresionOr:index CORCH_C {:
-            parser.printLog("expresion ::= ID CORCH_A expresionOr CORCH_C");
-            RESULT = id + "[" + index + "]"; :}
-            | READ_INT PAR_A PAR_C   {:
-            parser.printLog("expresion ::= READ_INT PAR_A PAR_C");
-            RESULT = "READ_INT()";   :}
-            | READ_FLOAT PAR_A PAR_C {:
-            parser.printLog("expresion ::= READ_FLOAT PAR_A PAR_C");
-            RESULT = "READ_FLOAT()"; :}
-            | READ_BOOL PAR_A PAR_C  {:
-            parser.printLog("expresion ::= READ_BOOL PAR_A PAR_C");
-            RESULT = "READ_BOOL()";  :}
-            | sum_acum:sm {:
-            parser.printLog("expresion ::= sum_acum");
-            RESULT = sm; :}
-            ;
+            parser.printLog("Regla 3.7.2 expresion ::= valorLiteral");
+            RESULT = vl;
+            :}
+    | ID:id CORCH_A expresionOr:e CORCH_C {:
+    parser.printLog("Regla: expresion ::= ID [ expresionOr ]");
 
+    if (!Parser.tablaSimbolos.exists(id)) {
+        throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
+    }
+
+    // 2. Validar que la variable sea realmente un arreglo
+    String tipoArreglo = Parser.tablaSimbolos.getType(id); // Ej: "FLOAT_ARRAY[10]"
+    if (!tipoArreglo.startsWith("FLOAT_ARRAY")) {
+        throw new Exception("Error semántico: '" + id + "' no es un arreglo indexable.");
+    }
+    if (!e.getTipoDato().equals("INT")) {
+        throw new Exception("Error semántico: El índice del arreglo '" + id + "' debe ser una expresión entera. Se recibió: " + e.getTipoDato());
+    }
+    NodoAccesoArreglo nodo = new NodoAccesoArreglo(id, e);
+    nodo.setTipoDato("FLOAT");
+    RESULT = nodo;
+:}
+            | READ_INT PAR_A PAR_C   {:
+            parser.printLog("Regla 3.7.4 expresion ::= READ_INT PAR_A PAR_C");
+            RESULT = new NodoLlamada("READ_INT", new ArrayList<>());
+            :}
+            | READ_FLOAT PAR_A PAR_C {:
+            parser.printLog("Regla 3.7.5 expresion ::= READ_FLOAT PAR_A PAR_C");
+            RESULT = new NodoLlamada("READ_FLOAT", new ArrayList<>());
+            :}
+            | READ_BOOL PAR_A PAR_C  {:
+            parser.printLog("Regla 3.7.6 expresion ::= READ_BOOL PAR_A PAR_C");
+            RESULT = new NodoLlamada("READ_BOOL", new ArrayList<>());
+            :}
+            | sum_acum:sm {:
+            parser.printLog("Regla 3.7.7 expresion ::= sum_acum");
+            RESULT = sm;
+            :};
 
 /* --- Dentro de la sección de valorLiteral --- */
-valorLiteral ::= CTE_INT:n    {: parser.printLog("valorLiteral ::= CTE_INT"); RESULT = n; :}
-              | CTE_FLOAT:f  {: parser.printLog("valorLiteral ::= CTE_FLOAT"); RESULT = f; :}
-              | CONST_BOOL:b {: parser.printLog("valorLiteral ::= CONST_BOOL"); RESULT = b; :}
-              | CTE_ARREGLO:a {: parser.printLog("valorLiteral ::= CTE_ARREGLO"); RESULT = a; :}
-              ;
+valorLiteral ::= CTE_INT:n {:
+                parser.printLog("Regla 3.8.0 valorLiteral ::= CTE_INT");
+                NodoHoja nodo = new NodoHoja(n);
+                nodo.setTipoDato("INT");
+                RESULT = nodo;
+            :}| CTE_FLOAT:f {:
+                parser.printLog("Regla 3.8.1 valorLiteral ::= CTE_FLOAT");
+                NodoHoja nodo = new NodoHoja(f);
+                nodo.setTipoDato("FLOAT");
+                RESULT = nodo;
+            :}| CONST_BOOL:b {:
+              parser.printLog("Regla 3.8.2 valorLiteral ::= CONST_BOOL");
+              NodoHoja nodo = new NodoHoja(b);
+              nodo.setTipoDato("BOOL");
+              RESULT = nodo;
+              :}
+              | arreglo_literal:a {:
+              parser.printLog("Regla 3.8.3 valorLiteral ::= arreglo_literal"); RESULT = a;
+              :}
+              | cte_string:s {:
+              parser.printLog("Regla 3.8.4 valorLiteral ::= cte_string"); RESULT = s;
+              :};
 
-sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A lista_expresiones:le CORCH_C PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A lista_expresiones CORCH_C PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", [" + le + "])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA CORCH_A CORCH_C PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA CORCH_A CORCH_C PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", [])"; :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA lista_expresiones:le PAR_C
-            {:
-              parser.printLog("sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA lista_expresiones PAR_C");
-              RESULT = "suma_cumulativa(" + e + ", " + le + ")"; :};
+arreglo_literal ::= CORCH_A lista_expresiones:le CORCH_C {:
+                    parser.printLog("Regla 3.12.0 arreglo_literal ::= CORCH_A lista_expresiones CORCH_C");
+                    NodoArreglo nodo = new NodoArreglo(le);
+                    nodo.setTipoDato("FLOAT_ARRAY");
+                    RESULT = nodo;
+                  :}
+                | CORCH_A CORCH_C {:
+                    NodoArreglo nodo = new NodoArreglo(new ArrayList<>());
+                    nodo.setTipoDato("FLOAT_ARRAY");
+                    RESULT = nodo;
+                  :};
+
+cte_string ::= CTE_STR:s {:
+             parser.printLog("Regla 3.9.0 cte_string ::= CTE_STR");
+             Parser.tablaSimbolos.addConstant("_" + s, "CTE_STR", s, String.valueOf(s.length()));
+             NodoHoja nodo = new NodoHoja("\"" + s + "\"");
+             nodo.setTipoDato("STRING");
+             RESULT = nodo;
+            :};
+
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA arreglo_literal:al PAR_C {:
+            parser.printLog("Regla 3.10.0 sum_acum con lista literal");
+            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, al));
+            nodo.setTipoDato("FLOAT");
+            RESULT = nodo;
+          :}
+          | SUMA_ACUM PAR_A expresionOr:e COMA ID:id PAR_C {:
+            parser.printLog("Regla 3.10.1 sum_acum con identificador");
+            if (!Parser.tablaSimbolos.exists(id)) {
+                throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
+            }
+            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, new NodoIdentificador(id)));
+            nodo.setTipoDato("FLOAT");
+            RESULT = nodo;
+          :};
 
 /* --------------------------------------------------------
    5. ARREGLOS Y LISTAS
    -------------------------------------------------------- */
 
 lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {:
-                    parser.printLog("lista_expresiones ::= lista_expresiones COMA expresionOr");
-                    RESULT = li + ", " + e; :}
+                    parser.printLog("Regla 3.11.0 lista_expresiones ::= lista_expresiones COMA expresionOr");
+                    li.add(e);
+                    RESULT = li;
+                    :}
                     | expresionOr:e {:
-                    parser.printLog("lista_expresiones ::= expresionOr");
-                    RESULT = e; :};
+                    parser.printLog("Regla 3.11.1 lista_expresiones ::= expresionOr");
+                    ArrayList<NodoC> le = new ArrayList<>();
+                    le.add(e);
+                    RESULT = le;
+                    :};
