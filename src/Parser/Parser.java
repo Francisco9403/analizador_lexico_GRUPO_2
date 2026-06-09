@@ -12,6 +12,7 @@ import java.util.ArrayList;
 import Lexer.Lexer;
 import TablaSimbolo.TablaSimbolo;
 import ast.*;
+import llvm.CodeGeneratorHelper;
 import service.TypeChecker;
 import java_cup.runtime.XMLElement;
 
@@ -186,15 +187,15 @@ public class Parser extends java_cup.runtime.lr_parser {
     "\073\025\065\026\057\027\063\030\100\032\077\046\060" +
     "\047\064\051\052\057\076\001\002\000\004\053\105\001" +
     "\002\000\006\025\106\051\052\001\002\000\004\050\111" +
-    "\001\002\000\004\050\110\001\002\000\060\004\uffb6\007" +
-    "\uffb6\011\uffb6\012\uffb6\013\uffb6\025\uffb6\031\uffb6\032\uffb6" +
-    "\033\uffb6\034\uffb6\035\uffb6\036\uffb6\037\uffb6\040\uffb6\041" +
-    "\uffb6\042\uffb6\044\uffb6\045\uffb6\050\uffb6\052\uffb6\053\uffb6" +
-    "\055\uffb6\056\uffb6\001\002\000\060\004\uffb5\007\uffb5\011" +
-    "\uffb5\012\uffb5\013\uffb5\025\uffb5\031\uffb5\032\uffb5\033\uffb5" +
-    "\034\uffb5\035\uffb5\036\uffb5\037\uffb5\040\uffb5\041\uffb5\042" +
-    "\uffb5\044\uffb5\045\uffb5\050\uffb5\052\uffb5\053\uffb5\055\uffb5" +
-    "\056\uffb5\001\002\000\034\021\070\022\066\023\061\024" +
+    "\001\002\000\004\050\110\001\002\000\060\004\uffb5\007" +
+    "\uffb5\011\uffb5\012\uffb5\013\uffb5\025\uffb5\031\uffb5\032\uffb5" +
+    "\033\uffb5\034\uffb5\035\uffb5\036\uffb5\037\uffb5\040\uffb5\041" +
+    "\uffb5\042\uffb5\044\uffb5\045\uffb5\050\uffb5\052\uffb5\053\uffb5" +
+    "\055\uffb5\056\uffb5\001\002\000\060\004\uffb6\007\uffb6\011" +
+    "\uffb6\012\uffb6\013\uffb6\025\uffb6\031\uffb6\032\uffb6\033\uffb6" +
+    "\034\uffb6\035\uffb6\036\uffb6\037\uffb6\040\uffb6\041\uffb6\042" +
+    "\uffb6\044\uffb6\045\uffb6\050\uffb6\052\uffb6\053\uffb6\055\uffb6" +
+    "\056\uffb6\001\002\000\034\021\070\022\066\023\061\024" +
     "\073\025\065\026\057\027\063\030\100\032\077\046\060" +
     "\047\064\051\052\057\076\001\002\000\032\004\uffd9\007" +
     "\uffd9\011\uffd9\012\uffd9\013\uffd9\025\uffd9\045\uffd9\050\uffd9" +
@@ -1773,43 +1774,51 @@ class CUP$Parser$actions {
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 75: // sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA arreglo_literal PAR_C 
+          case 75: // sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA ID PAR_C 
             {
               NodoC RESULT =null;
-		int eleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).left;
-		int eright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
-		NodoC e = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
-		int alleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
-		int alright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
-		NodoC al = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
+		int limiteleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).left;
+		int limiteright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
+		NodoC limite = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
+		int idArregloleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
+		int idArregloright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
+		String idArreglo = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-            parser.printLog("Regla 3.10.0 sum_acum con lista literal");
-            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, al));
-            nodo.setTipoDato("FLOAT");
-            RESULT = nodo;
+            parser.printLog("Regla 3.10.1 sum_acum con identificador (AST Nativo)");
+
+            if (!Parser.tablaSimbolos.exists(idArreglo)) {
+                throw new Exception("Error semántico: Variable '" + idArreglo + "' no declarada.");
+            }
+
+            String tipoArreglo = Parser.tablaSimbolos.getType(idArreglo);
+            if (!tipoArreglo.startsWith("FLOAT_ARRAY")) {
+                 throw new Exception("Error semántico: Suma Acumulativa requiere un float_array.");
+            }
+
+            NodoIdentificador nodoArr = new NodoIdentificador(idArreglo);
+            nodoArr.setTipoDato(tipoArreglo);
+
+            RESULT = new NodoSumaAcumulativa(limite, nodoArr, idArreglo);
           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("sum_acum",30, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-5)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
           return CUP$Parser$result;
 
           /*. . . . . . . . . . . . . . . . . . . .*/
-          case 76: // sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA ID PAR_C 
+          case 76: // sum_acum ::= SUMA_ACUM PAR_A expresionOr COMA arreglo_literal PAR_C 
             {
               NodoC RESULT =null;
-		int eleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).left;
-		int eright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
-		NodoC e = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
-		int idleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
-		int idright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
-		String id = (String)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
+		int limiteleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).left;
+		int limiteright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-3)).right;
+		NodoC limite = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-3)).value;
+		int alleft = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).left;
+		int alright = ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-1)).right;
+		NodoC al = (NodoC)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
-            parser.printLog("Regla 3.10.1 sum_acum con identificador");
-            if (!Parser.tablaSimbolos.exists(id)) {
-                throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
-            }
-            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, new NodoIdentificador(id)));
-            nodo.setTipoDato("FLOAT");
-            RESULT = nodo;
+            parser.printLog("Regla 3.10.0 sum_acum con lista literal (AST Nativo)");
+            // NOTA: Para el arreglo literal generamos una variable temporal en memoria
+            String idTemp = "_arr_temp_" + CodeGeneratorHelper.getNewLabel();
+            RESULT = new NodoSumaAcumulativa(limite, al, idTemp);
           
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("sum_acum",30, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-5)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }

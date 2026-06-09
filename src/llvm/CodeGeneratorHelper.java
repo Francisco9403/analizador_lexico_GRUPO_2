@@ -56,6 +56,7 @@ public class CodeGeneratorHelper {
     public static String mapearTipoLLVM(String tipoDato) {
         if ("FLOAT".equals(tipoDato)) return "double";
         if ("BOOL".equals(tipoDato)) return "i1";
+        if (tipoDato != null && tipoDato.startsWith("FLOAT_ARRAY")) return "double*";
         return "i32"; // Para INT (y por defecto)
     }
 }

@@ -486,20 +486,28 @@ cte_string ::= CTE_STR:s {:
              RESULT = nodo;
             :};
 
-sum_acum ::= SUMA_ACUM PAR_A expresionOr:e COMA arreglo_literal:al PAR_C {:
-            parser.printLog("Regla 3.10.0 sum_acum con lista literal");
-            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, al));
-            nodo.setTipoDato("FLOAT");
-            RESULT = nodo;
-          :}
-          | SUMA_ACUM PAR_A expresionOr:e COMA ID:id PAR_C {:
-            parser.printLog("Regla 3.10.1 sum_acum con identificador");
-            if (!Parser.tablaSimbolos.exists(id)) {
-                throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
+sum_acum ::= SUMA_ACUM PAR_A expresionOr:limite COMA ID:idArreglo PAR_C {:
+            parser.printLog("Regla 3.10.1 sum_acum con identificador (AST Nativo)");
+
+            if (!Parser.tablaSimbolos.exists(idArreglo)) {
+                throw new Exception("Error semántico: Variable '" + idArreglo + "' no declarada.");
             }
-            NodoLlamada nodo = new NodoLlamada("suma_cumulativa", List.of(e, new NodoIdentificador(id)));
-            nodo.setTipoDato("FLOAT");
-            RESULT = nodo;
+
+            String tipoArreglo = Parser.tablaSimbolos.getType(idArreglo);
+            if (!tipoArreglo.startsWith("FLOAT_ARRAY")) {
+                 throw new Exception("Error semántico: Suma Acumulativa requiere un float_array.");
+            }
+
+            NodoIdentificador nodoArr = new NodoIdentificador(idArreglo);
+            nodoArr.setTipoDato(tipoArreglo);
+
+            RESULT = new NodoSumaAcumulativa(limite, nodoArr, idArreglo);
+          :}
+          | SUMA_ACUM PAR_A expresionOr:limite COMA arreglo_literal:al PAR_C {:
+            parser.printLog("Regla 3.10.0 sum_acum con lista literal (AST Nativo)");
+            // NOTA: Para el arreglo literal generamos una variable temporal en memoria
+            String idTemp = "_arr_temp_" + CodeGeneratorHelper.getNewLabel();
+            RESULT = new NodoSumaAcumulativa(limite, al, idTemp);
           :};
 
 /* --------------------------------------------------------
