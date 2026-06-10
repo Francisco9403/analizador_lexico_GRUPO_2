@@ -4,13 +4,13 @@ import llvm.CodeGeneratorHelper;
 import java.util.Collections;
 import java.util.List;
 
-public class NodoUnario extends NodoC {
+public class OperacionUnaria extends Expresion {
     private final String operador;
-    private final NodoC nodo;
+    private final Expresion expresion;
 
-    public NodoUnario(String operador, NodoC nodo) {
+    public OperacionUnaria(String operador, Expresion expresion) {
         this.operador = operador;
-        this.nodo = nodo;
+        this.expresion = expresion;
     }
 
     @Override
@@ -19,8 +19,8 @@ public class NodoUnario extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() {
-        return Collections.singletonList(nodo);
+    public List<Nodo> getHijos() {
+        return Collections.singletonList(expresion);
     }
 
     @Override
@@ -28,7 +28,7 @@ public class NodoUnario extends NodoC {
         StringBuilder codigo = new StringBuilder();
 
         // Generar el código de la expresión interna
-        codigo.append(nodo.generarCodigo());
+        codigo.append(expresion.generarCodigo());
 
         this.setIrRef(CodeGeneratorHelper.getNewPointer());
         boolean esFloat = "FLOAT".equals(this.getTipoDato());
@@ -36,14 +36,14 @@ public class NodoUnario extends NodoC {
         if ("-".equals(operador)) {
             if (esFloat) {
                 // Negación en punto flotante: fneg double %reg
-                codigo.append(String.format("  %s = fneg double %s\n", this.getIrRef(), nodo.getIrRef()));
+                codigo.append(String.format("  %s = fneg double %s\n", this.getIrRef(), expresion.getIrRef()));
             } else {
                 // Negación entera: restando de 0 (sub i32 0, %reg)
-                codigo.append(String.format("  %s = sub i32 0, %s\n", this.getIrRef(), nodo.getIrRef()));
+                codigo.append(String.format("  %s = sub i32 0, %s\n", this.getIrRef(), expresion.getIrRef()));
             }
         } else if ("!".equals(operador) || "not".equalsIgnoreCase(operador)) {
             // Negación lógica en booleano i1 haciendo XOR contra 'true'
-            codigo.append(String.format("  %s = xor i1 %s, true\n", this.getIrRef(), nodo.getIrRef()));
+            codigo.append(String.format("  %s = xor i1 %s, true\n", this.getIrRef(), expresion.getIrRef()));
         }
 
         return codigo.toString();

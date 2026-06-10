@@ -3,11 +3,11 @@ package ast;
 import llvm.CodeGeneratorHelper;
 import java.util.List;
 
-public class NodoAsignacion extends NodoC {
-    private NodoC identificador;
-    private NodoC expresion;
+public class Asignacion extends Expresion {
+    private Expresion identificador;
+    private Expresion expresion;
 
-    public NodoAsignacion(NodoC identificador, NodoC expresion) {
+    public Asignacion(Expresion identificador, Expresion expresion) {
         this.identificador = identificador;
         this.expresion = expresion;
     }
@@ -18,7 +18,7 @@ public class NodoAsignacion extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() {
+    public List<Nodo> getHijos() {
         return List.of(identificador, expresion);
     }
 
@@ -38,18 +38,18 @@ public class NodoAsignacion extends NodoC {
 
         String tipoLLVM = CodeGeneratorHelper.mapearTipoLLVM(tipoDato);
 
-        if (this.identificador instanceof NodoIdentificador) {
-            String nombreVar = ((NodoIdentificador)this.identificador).getNombre();
+        if (this.identificador instanceof Identificador) {
+            String nombreVar = ((Identificador)this.identificador).getNombre();
 
             // 2. Si lo que se asigna es un arreglo, forzamos el uso de punteros ('ptr')
-            if (this.expresion instanceof NodoArreglo) {
+            if (this.expresion instanceof Arreglo) {
                 codigo.append(String.format("  store ptr %s, ptr %%%s\n",
                         this.expresion.getIrRef(), nombreVar));
             } else {
                 codigo.append(String.format("  store %s %s, %s* %%%s\n",
                         tipoLLVM, this.expresion.getIrRef(), tipoLLVM, nombreVar));
             }
-        } else if (this.identificador instanceof NodoAccesoArreglo) {
+        } else if (this.identificador instanceof AccesoArreglo) {
         }
 
         return codigo.toString();

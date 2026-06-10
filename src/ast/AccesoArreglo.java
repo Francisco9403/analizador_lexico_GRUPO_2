@@ -3,11 +3,11 @@ package ast;
 import llvm.CodeGeneratorHelper;
 import java.util.List;
 
-public class NodoAccesoArreglo extends NodoC {
+public class AccesoArreglo extends Expresion {
     private String id;
-    private NodoC indice;
+    private Expresion indice;
 
-    public NodoAccesoArreglo(String id, NodoC indice) {
+    public AccesoArreglo(String id, Expresion indice) {
         this.id = id;
         this.indice = indice;
     }
@@ -18,7 +18,7 @@ public class NodoAccesoArreglo extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() {
+    public List<Nodo> getHijos() {
         return List.of(indice);
     }
 

@@ -4,10 +4,10 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodoArreglo extends Expresion {
-    private final List<NodoC> elementos;
+public class Arreglo extends Expresion {
+    private final List<Expresion> elementos;
 
-    public NodoArreglo(List<NodoC> elementos) {
+    public Arreglo(List<Expresion> elementos) {
         this.elementos = elementos != null ? elementos : new ArrayList<>();
     }
 
@@ -17,7 +17,7 @@ public class NodoArreglo extends Expresion {
     }
 
     @Override
-    public List<NodoC> getHijos() {
+    public List<Nodo> getHijos() {
         return new ArrayList<>(elementos);
     }
 
@@ -41,7 +41,7 @@ public class NodoArreglo extends Expresion {
 
         // 2. Evaluar y guardar cada elemento secuencialmente
         for (int i = 0; i < tamaño; i++) {
-            NodoC elem = elementos.get(i);
+            Expresion elem = elementos.get(i);
             codigo.append(elem.generarCodigo());
 
             // Obtener el puntero indexado: %elem_ptr = getelementptr [N x T], [N x T]* %array, i32 0, i32 i

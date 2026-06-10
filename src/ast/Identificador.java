@@ -2,10 +2,10 @@ package ast;
 
 import llvm.CodeGeneratorHelper;
 
-public class NodoIdentificador extends Expresion {
+public class Identificador extends Expresion {
     private final String nombre;
 
-    public NodoIdentificador(String nombre) {
+    public Identificador(String nombre) {
         this.nombre = nombre;
     }
 

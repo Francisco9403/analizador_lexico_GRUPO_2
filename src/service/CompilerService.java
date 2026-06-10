@@ -8,8 +8,10 @@ import java.util.List;
 import Lexer.Token;
 import Exception.SyntaxException;
 import java_cup.runtime.Symbol;
-import ast.NodoPrograma;
-
+import ast.Programa;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 
 /**
  * Orquesta analisis lexico y sintactico para CLI y GUI.
@@ -48,7 +50,7 @@ public class CompilerService {
 
             // GENERACIÓN DEL AST, ARCHIVO .DOT Y .PNG ---
             if (result != null && result.value != null) {
-                NodoPrograma raiz = (NodoPrograma) result.value;
+                Programa raiz = (Programa) result.value;
                 String dotCode = raiz.generarGrafoDot();
                 java.nio.file.Files.writeString(java.nio.file.Path.of("arbol_ast.dot"), dotCode);
                 out.append("[OK] Árbol AST (Graphviz) generado en arbol_ast.dot\n");
@@ -108,6 +110,61 @@ public class CompilerService {
             }
         } catch (Exception e) {
             System.err.println("Error al guardar el archivo de logs: " + e.getMessage());
+        }
+    }
+
+    public String generarEjecutable(String llFilePath) {
+        // Cambiamos la extensión .ll por .exe
+        String exePath = llFilePath.substring(0, llFilePath.lastIndexOf('.')) + ".exe";
+
+        try {
+            // NOTA: Si usás funciones externas como 'suma_cumulativa',
+            // asegurate de que el archivo C (ej: "runtime.c") esté en la misma carpeta raíz
+            // Si no usás dependencias externas, remové "runtime.c" del comando.
+            ProcessBuilder pbClang = new ProcessBuilder("clang", "programa.ll", "runtime.c", "-o", "programa.exe");
+            pbClang.redirectErrorStream(true);
+            Process proceso = pbClang.start();
+
+            // Leemos si Clang tira algún error de sintaxis o linkeo
+            BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getInputStream()));
+            String linea;
+            StringBuilder logClang = new StringBuilder();
+            while ((linea = reader.readLine()) != null) {
+                logClang.append(linea).append("\n");
+            }
+
+            int exitCode = proceso.waitFor();
+            if (exitCode == 0) {
+                return exePath; // Éxito: retornamos la ruta del ejecutable creado
+            } else {
+                System.err.println("Error de Clang:\n" + logClang.toString());
+                return null;
+            }
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public String ejecutarCodigoNativo(String exePath) {
+        StringBuilder resultadoConsola = new StringBuilder();
+        try {
+            ProcessBuilder pb = new ProcessBuilder(exePath);
+            pb.redirectErrorStream(true);
+            Process proceso = pb.start();
+
+            // Capturamos lo que el programa imprime con 'printf' o 'scanf'
+            BufferedReader reader = new BufferedReader(new InputStreamReader(proceso.getInputStream()));
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                resultadoConsola.append(linea).append("\n");
+            }
+
+            proceso.waitFor();
+            return resultadoConsola.toString();
+        } catch (IOException | InterruptedException e) {
+            e.printStackTrace();
+            return "Error al ejecutar el programa nativo: " + e.getMessage();
         }
     }
 }

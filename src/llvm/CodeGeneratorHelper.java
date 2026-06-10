@@ -7,6 +7,8 @@ public class CodeGeneratorHelper {
     private static int labelID = 0;
     private static Stack<String> loopStartLabels = new Stack<>();
     private static Stack<String> loopEndLabels = new Stack<>();
+    private static java.util.Map<String, String> globalStrings = new java.util.LinkedHashMap<>();
+    private static int stringCount = 0;
 
     private CodeGeneratorHelper(){}
 
@@ -44,6 +46,27 @@ public class CodeGeneratorHelper {
     //    nextID = 0;
     //    labelID = 0;
     //}
+
+    public static String addGlobalString(String texto) {
+        String ref = "@.str.custom" + stringCount++;
+        // Limpiamos comillas si vienen del parser y agregamos salto de línea LLVM
+        String cleanText = texto.replace("\"", "") + "\\0A\\00";
+        // Calculamos longitud real en bytes
+        int len = texto.replace("\"", "").length() + 2;
+
+        String definicion = String.format("%s = private constant [%d x i8] c\"%s\"", ref, len, cleanText);
+        globalStrings.put(ref, definicion);
+
+        return ref + "||" + len; // Devolvemos ref y tamaño empaquetados
+    }
+
+    public static String getGlobalStringsDef() {
+        StringBuilder sb = new StringBuilder();
+        for (String def : globalStrings.values()) {
+            sb.append(def).append("\n");
+        }
+        return sb.toString();
+    }
 
     // Acordate de vaciar las pilas en tu método reset()
     public static void reset() {

@@ -2,7 +2,7 @@ package ast;
 
 import llvm.CodeGeneratorHelper;
 
-public class NodoControl extends NodoC {
+public class NodoControl extends Nodo {
     private String tipoControl; // "BREAK" o "CONTINUE"
 
     public NodoControl(String tipoControl) {
@@ -17,11 +17,20 @@ public class NodoControl extends NodoC {
     @Override
     public String generarCodigo() {
         if (tipoControl.equals("BREAK")) {
-            // Salta al final del ciclo
-            return String.format("  br label %%%s\n", CodeGeneratorHelper.getCurrentLoopEnd());
+            String endLabel = CodeGeneratorHelper.getCurrentLoopEnd();
+            // Validación semántica:
+            if (endLabel.equals("error_no_loop")) {
+                throw new RuntimeException("Error Semántico: Se encontró un BREAK fuera de un ciclo.");
+            }
+            return String.format("  br label %%%s\n", endLabel);
+
         } else if (tipoControl.equals("CONTINUE")) {
-            // Salta a la evaluación de la condición del ciclo
-            return String.format("  br label %%%s\n", CodeGeneratorHelper.getCurrentLoopStart());
+            String startLabel = CodeGeneratorHelper.getCurrentLoopStart();
+            // Validación semántica:
+            if (startLabel.equals("error_no_loop")) {
+                throw new RuntimeException("Error Semántico: Se encontró un CONTINUE fuera de un ciclo.");
+            }
+            return String.format("  br label %%%s\n", startLabel);
         }
         return "";
     }

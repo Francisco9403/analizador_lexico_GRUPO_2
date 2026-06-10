@@ -2,19 +2,19 @@ package ast;
 import llvm.CodeGeneratorHelper;
 import java.util.List;
 
-public class NodoOperacion extends NodoC {
+public class NodoOperacion extends Expresion {
     private final String operador;
-    private final NodoC izquierda;
-    private final NodoC derecha;
+    private final Expresion izquierda;
+    private final Expresion derecha;
 
-    public NodoOperacion(String operador, NodoC izquierda, NodoC derecha) {
+    public NodoOperacion(String operador, Expresion izquierda, Expresion derecha) {
         this.operador = operador;
         this.izquierda = izquierda;
         this.derecha = derecha;
     }
 
-    public NodoC getIzquierda() { return izquierda; }
-    public NodoC getDerecha() { return derecha; }
+    public Expresion getIzquierda() { return izquierda; }
+    public Expresion getDerecha() { return derecha; }
     public String getOperador() { return operador; }
 
     @Override
@@ -26,12 +26,83 @@ public class NodoOperacion extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() { return List.of(izquierda, derecha); }
+    public List<Nodo> getHijos() { return List.of(izquierda, derecha); }
 
     @Override
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
+        // =========================================================
+        // 1. LÓGICA DE CORTOCIRCUITO PARA AND (&&)
+        // =========================================================
+        if (operador.equals("&&")) {
+            String lblEvalDer = CodeGeneratorHelper.getNewLabel();
+            String lblFin = CodeGeneratorHelper.getNewLabel();
+            String ptrRes = CodeGeneratorHelper.getNewPointer();
+            String regFinal = CodeGeneratorHelper.getNewPointer();
+
+            // Reservar memoria y asumir FALSE por defecto
+            codigo.append(String.format("  %s = alloca i1\n", ptrRes));
+            codigo.append(String.format("  store i1 false, i1* %s\n", ptrRes));
+
+            // Evaluar lado izquierdo
+            codigo.append(this.getIzquierda().generarCodigo());
+
+            // Si Izq es TRUE, salto a evaluar Der. Si es FALSE, corto y salto al fin.
+            codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
+                    this.getIzquierda().getIrRef(), lblEvalDer, lblFin));
+
+            // Evaluar lado derecho
+            codigo.append("\n").append(lblEvalDer).append(":\n");
+            codigo.append(this.getDerecha().generarCodigo());
+            codigo.append(String.format("  store i1 %s, i1* %s\n", this.getDerecha().getIrRef(), ptrRes));
+            codigo.append(String.format("  br label %%%s\n", lblFin));
+
+            // Bloque final
+            codigo.append("\n").append(lblFin).append(":\n");
+            codigo.append(String.format("  %s = load i1, i1* %s\n", regFinal, ptrRes));
+
+            this.setIrRef(regFinal);
+            return codigo.toString();
+        }
+
+        // =========================================================
+        // 2. LÓGICA DE CORTOCIRCUITO PARA OR (||)
+        // =========================================================
+        if (operador.equals("||")) {
+            String lblEvalDer = CodeGeneratorHelper.getNewLabel();
+            String lblFin = CodeGeneratorHelper.getNewLabel();
+            String ptrRes = CodeGeneratorHelper.getNewPointer();
+            String regFinal = CodeGeneratorHelper.getNewPointer();
+
+            // Reservar memoria y asumir TRUE por defecto
+            codigo.append(String.format("  %s = alloca i1\n", ptrRes));
+            codigo.append(String.format("  store i1 true, i1* %s\n", ptrRes));
+
+            // Evaluar lado izquierdo
+            codigo.append(this.getIzquierda().generarCodigo());
+
+            // Si Izq es TRUE, corto y salto al fin. Si es FALSE, salto a evaluar Der.
+            codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
+                    this.getIzquierda().getIrRef(), lblFin, lblEvalDer));
+
+            // Evaluar lado derecho
+            codigo.append("\n").append(lblEvalDer).append(":\n");
+            codigo.append(this.getDerecha().generarCodigo());
+            codigo.append(String.format("  store i1 %s, i1* %s\n", this.getDerecha().getIrRef(), ptrRes));
+            codigo.append(String.format("  br label %%%s\n", lblFin));
+
+            // Bloque final
+            codigo.append("\n").append(lblFin).append(":\n");
+            codigo.append(String.format("  %s = load i1, i1* %s\n", regFinal, ptrRes));
+
+            this.setIrRef(regFinal);
+            return codigo.toString();
+        }
+
+        // =========================================================
+        // 3. LÓGICA NORMAL PARA MATEMÁTICAS Y COMPARACIONES
+        // =========================================================
         codigo.append(this.getIzquierda().generarCodigo());
         codigo.append(this.getDerecha().generarCodigo());
 
@@ -39,11 +110,6 @@ public class NodoOperacion extends NodoC {
 
         String tipoOperandos = this.getIzquierda().getTipoDato();
         String typeLLVM = CodeGeneratorHelper.mapearTipoLLVM(tipoOperandos);
-
-        // Transformación directa: forzar 1 bit para compuertas lógicas
-        if (operador.equals("&&") || operador.equals("||")) {
-            typeLLVM = "i1";
-        }
 
         String opLLVM = get_llvm_op_code(this.getOperador(), tipoOperandos);
 

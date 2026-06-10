@@ -4,17 +4,17 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodoPrograma extends NodoC {
-    private final List<NodoC> declaraciones;
-    private final List<NodoC> sentencias;
+public class Programa extends Nodo {
+    private final List<Nodo> declaraciones;
+    private final List<Nodo> sentencias;
 
-    public NodoPrograma(List<NodoC> declaraciones, List<NodoC> sentencias) {
+    public Programa(List<Nodo> declaraciones, List<Nodo> sentencias) {
         this.declaraciones = declaraciones != null ? declaraciones : new ArrayList<>();
         this.sentencias = sentencias != null ? sentencias : new ArrayList<>();
     }
 
-    public List<NodoC> getDeclaraciones() { return declaraciones; }
-    public List<NodoC> getSentencias() { return sentencias; }
+    public List<Nodo> getDeclaraciones() { return declaraciones; }
+    public List<Nodo> getSentencias() { return sentencias; }
 
     @Override
     public String getEtiqueta() {
@@ -22,8 +22,8 @@ public class NodoPrograma extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() {
-        List<NodoC> hijos = new ArrayList<>();
+    public List<Nodo> getHijos() {
+        List<Nodo> hijos = new ArrayList<>();
         hijos.addAll(declaraciones);
         hijos.addAll(sentencias);
         return hijos;
@@ -51,11 +51,11 @@ public class NodoPrograma extends NodoC {
 
         CodeGeneratorHelper.reset();
 
-        for(NodoC decl : this.getDeclaraciones()) {
+        for(Nodo decl : this.getDeclaraciones()) {
             resultado.append(decl.generarCodigo());
         }
 
-        for(NodoC sent : this.getSentencias()) {
+        for(Nodo sent : this.getSentencias()) {
             resultado.append(sent.generarCodigo());
         }
 

@@ -22,7 +22,7 @@ public abstract class OperacionBinaria extends Expresion {
     }
 
     @Override
-    public List<NodoC> getHijos() {
+    public List<Nodo> getHijos() {
         return List.of(izquierda, derecha);
     }
 }

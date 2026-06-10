@@ -4,12 +4,12 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodoWhile extends Sentencia {
-    private final NodoC condicion;
-    private final List<NodoC> cuerpo;
-    private final List<NodoC> altWhiles;
+public class While extends Expresion {
+    private final Expresion condicion;
+    private final List<Nodo> cuerpo;
+    private final List<Nodo> altWhiles;
 
-    public NodoWhile(NodoC condicion, List<NodoC> cuerpo, List<NodoC> altWhiles) {
+    public While(Expresion condicion, List<Nodo> cuerpo, List<Nodo> altWhiles) {
         this.condicion = condicion;
         this.cuerpo = cuerpo;
         this.altWhiles = altWhiles;
@@ -21,8 +21,8 @@ public class NodoWhile extends Sentencia {
     }
 
     @Override
-    public List<NodoC> getHijos() {
-        List<NodoC> hijos = new ArrayList<>();
+    public List<Nodo> getHijos() {
+        List<Nodo> hijos = new ArrayList<>();
         hijos.add(condicion);
         if (cuerpo != null) hijos.addAll(cuerpo);
         if (altWhiles != null) hijos.addAll(altWhiles);
@@ -55,7 +55,7 @@ public class NodoWhile extends Sentencia {
         // 2. Bloque del cuerpo del bucle
         codigo.append("\n").append(labelCuerpo).append(":\n");
         if (cuerpo != null) {
-            for (NodoC sent : cuerpo) {
+            for (Nodo sent : cuerpo) {
                 codigo.append(sent.generarCodigo());
             }
         }
@@ -64,7 +64,7 @@ public class NodoWhile extends Sentencia {
         // 3. Bloque Alternativo (altWhiles)
         if (this.altWhiles != null && !this.altWhiles.isEmpty()) {
             codigo.append("\n").append(labelFalso).append(":\n");
-            for (NodoC sentAlt : altWhiles) {
+            for (Nodo sentAlt : altWhiles) {
                 codigo.append(sentAlt.generarCodigo());
             }
             codigo.append(String.format("  br label %%%s\n", labelEnd));

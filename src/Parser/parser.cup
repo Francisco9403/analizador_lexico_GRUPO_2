@@ -5,6 +5,7 @@ import Exception.SyntaxException;
 import java.util.ArrayList;
 import Lexer.Lexer;
 import TablaSimbolo.TablaSimbolo;
+import llvm.CodeGeneratorHelper;
 import ast.*;
 import service.TypeChecker;
 
@@ -55,16 +56,21 @@ terminal UMENOS;
 
 
 /* --- DECLARACION DE NO TERMINALES --- */
-nonterminal NodoPrograma program;
+nonterminal Programa program;
 nonterminal String tipo;
-nonterminal NodoC cte_string;
-nonterminal ArrayList<NodoC> bloque_declaraciones, declaracion;
+nonterminal ArrayList<Nodo> bloque_declaraciones, declaracion;
 nonterminal ArrayList<String> lista_ids;
-nonterminal ArrayList<NodoC> bloque_sentencias, seccion_sentencias, lista_sentencias, bloque;
-nonterminal ArrayList<NodoC> elif_part, else_part, alt_while_part, lista_expresiones;
-nonterminal NodoC sentencia, asignacion, impresion, sentencia_if, sentencia_while, sentencia_control;
-nonterminal NodoC expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
-nonterminal NodoC comparacion, valorLiteral, arreglo_literal, sum_acum;
+nonterminal ArrayList<Expresion> lista_expresiones;
+nonterminal ArrayList<Nodo> bloque, bloque_sentencias, seccion_sentencias, lista_sentencias;
+nonterminal ArrayList<Nodo> elif_part, else_part, alt_while_part;
+nonterminal Nodo sentencia, sentencia_control;
+nonterminal Impresion impresion;
+nonterminal If sentencia_if;
+nonterminal While sentencia_while;
+nonterminal Expresion expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
+nonterminal SumaAcumulativa sum_acum;
+nonterminal Asignacion asignacion;
+nonterminal Expresion comparacion, valorLiteral, arreglo_literal, cte_string;
 
 start with program;
 
@@ -73,11 +79,11 @@ start with program;
    -------------------------------------------------------- */
 program ::= bloque_declaraciones:bd seccion_sentencias:bs {:
             parser.printLog("Regla 1.0.0 program ::= bloque_declaraciones seccion_sentencias");
-            RESULT = new NodoPrograma(bd, bs);
+            RESULT = new Programa(bd, bs);
         :}
         | seccion_sentencias:bs {:
              parser.printLog("Regla 1.0.1 program ::= seccion_sentencias");
-             RESULT = new NodoPrograma(new ArrayList<>(), bs);
+             RESULT = new Programa(new ArrayList<>(), bs);
         :};
 
 /* --------------------------------------------------------
@@ -90,11 +96,11 @@ seccion_sentencias ::= PROGRAM V_INDENT bloque_sentencias:bs V_DEDENT {:
                     :}
                     | PROGRAM {:
                       parser.printLog("Regla 1.1.1 seccion_sentencias ::= PROGRAM (Seccion vacia)");
-                      RESULT = new ArrayList<NodoC>();
+                      RESULT = new ArrayList<Nodo>();
                     :}
                     | /* vacio - Sin sentencias */ {:
                       parser.printLog("Regla 1.1.2 seccion_sentencias ::= ( Sin sección PROGRAM )");
-                      RESULT = new ArrayList<NodoC>();
+                      RESULT = new ArrayList<Nodo>();
                     :};
 
 bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
@@ -109,13 +115,13 @@ bloque_declaraciones ::= bloque_declaraciones:bd declaracion:d {:
 
 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l {:
             parser.printLog("Regla 1.3.0 declaracion ::= tipo:t DOS_PUNTOS lista_ids:l");
-            ArrayList<NodoC> decls = new ArrayList<>();
+            ArrayList<Nodo> decls = new ArrayList<>();
             for(String id : l) {
                 if (!tablaSimbolos.exists(id)) {
                     tablaSimbolos.addId(id, "ID");
                     tablaSimbolos.setType(id, t);
                     parser.printLog("Variable declarada: " + id + " de tipo " + t);
-                    decls.add(new NodoDeclaracion(t, id));
+                    decls.add(new Declaracion(t, id));
                 } else {
                     System.err.println("Error semántico: " + id + " ya existe.");
                 }
@@ -153,7 +159,7 @@ bloque_sentencias ::= bloque_sentencias:bs sentencia:s {:
                    :}
                  | sentencia:s {:
                    parser.printLog("Regla 2.0.1 bloque_sentencias ::= sentencia");
-                   ArrayList<NodoC> lista = new ArrayList<>(); lista.add(s); RESULT = lista;
+                   ArrayList<Nodo> lista = new ArrayList<>(); lista.add(s); RESULT = lista;
                  :};
 
 sentencia ::= asignacion:a {: parser.printLog("Regla 2.1.0 sentencia ::= asignacion"); RESULT= a; :}
@@ -173,19 +179,19 @@ asignacion ::= ID:id ASIG expresionOr:e {:
         throw new Exception("Error de tipos: no se puede asignar " + e.getTipoDato() + " a " + id + " (" + tipoVar + ")");
     }
 
-    NodoAsignacion nodo = new NodoAsignacion(new NodoIdentificador(id), e);
+    Asignacion nodo = new Asignacion(new Identificador(id), e);
     nodo.setTipoDato(tipoVar); // Decoramos el nodo
     RESULT = nodo;
 :};
 
 impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.0 impresion ::= PRINT PAR_A expresionOr PAR_C");
-                RESULT = new NodoImpresion(e);
+                RESULT = new Impresion(e);
               :}
             | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
                 // s.getEtiqueta() devuelve el string interno
-                RESULT = new NodoImpresion(s.getEtiqueta(), e);
+                RESULT = new Impresion(s.getEtiqueta(), e);
             :};
 
 bloque ::= V_INDENT lista_sentencias:ls V_DEDENT {:
@@ -199,7 +205,7 @@ lista_sentencias ::= lista_sentencias:ls sentencia:s{:
                   :}
                   | sentencia:s {:
                   parser.printLog("Regla 2.6.1 lista_sentencias ::= sentencia");
-                  ArrayList<NodoC> ls = new ArrayList<>(); ls.add(s); RESULT = ls;
+                  ArrayList<Nodo> ls = new ArrayList<>(); ls.add(s); RESULT = ls;
                   :};
 
 sentencia_control ::= BREAK {:
@@ -213,22 +219,22 @@ sentencia_control ::= BREAK {:
 
 sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {:
                   parser.printLog("Regla 2.8.0 sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = new NodoIf(c, b, el, es);
+                  RESULT = new If(c, b, el, es);
                :};
 
 sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {:
                    parser.printLog("Regla 2.9.0 sentencia_while ::= WHILE expresionOr bloque alt_while_part");
-                   RESULT = new NodoWhile(c, b, aw);
+                   RESULT = new While(c, b, aw);
                :};
 
 elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {:
              parser.printLog("Regla 2.10.0 elif_part ::= elif_part ELIF expresionOr bloque");
-             el.add(new NodoIf(c, b, new ArrayList<>(), new ArrayList<>()));
+             el.add(new If(c, b, new ArrayList<>(), new ArrayList<>()));
              RESULT = el;
             :}
             | /* vacio */ {:
              parser.printLog("Regla 2.10.1 elif_part ::= (vacio)");
-             RESULT = new ArrayList<NodoC>();
+             RESULT = new ArrayList<Nodo>();
             :};
 
 else_part ::= ELSE bloque:b {:
@@ -237,17 +243,17 @@ else_part ::= ELSE bloque:b {:
             :}
             | /* vacio */ {:
              parser.printLog("Regla 2.11.1 else_part ::= (vacio)");
-             RESULT = new ArrayList<NodoC>();
+             RESULT = new ArrayList<Nodo>();
             :};
 
 alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
                   parser.printLog("Regla 2.12.0 alt_while_part ::= alt_while_part ALT_WHILE expresionOr bloque");
-                  aw.add(new NodoWhile(c, b, new ArrayList<>()));
+                  aw.add(new While(c, b, new ArrayList<>()));
                   RESULT = aw;
                  :}
                  | /* vacio */ {:
                   parser.printLog("Regla 2.12.1 alt_while_part ::= (vacio)");
-                  RESULT = new ArrayList<NodoC>();
+                  RESULT = new ArrayList<Nodo>();
                  :};
 
 /* --------------------------------------------------------
@@ -256,7 +262,7 @@ alt_while_part ::= alt_while_part:aw ALT_WHILE expresionOr:c bloque:b {:
 
 expresionOr::= expresionAnd:ea OR expresionOr:eo {:
               parser.printLog("Regla 3.0.0 expresionOr ::= expresionAnd OR expresionOr");
-              RESULT = new NodoOperacion("||", ea, eo);
+              RESULT = new OperacionLogica("||", ea, eo);
             :}
             | expresionAnd:ea {:
               parser.printLog("Regla 3.0.1 expresionOr ::= expresionAnd");
@@ -265,7 +271,7 @@ expresionOr::= expresionAnd:ea OR expresionOr:eo {:
 
 expresionAnd::= expresionNot:en AND expresionAnd:ea {:
               parser.printLog("Regla 3.1.0 expresionAnd ::= expresionNot AND expresionAnd");
-              RESULT = new NodoOperacion("&&", en, ea);
+              RESULT = new OperacionLogica("&&", en, ea);
             :}
             | expresionNot:en {:
               parser.printLog("Regla 3.1.1 expresionAnd ::= expresionNot");
@@ -274,7 +280,7 @@ expresionAnd::= expresionNot:en AND expresionAnd:ea {:
 
 expresionNot ::= NOT expresionNot:en {:
                parser.printLog("Regla 3.2.0 expresionNot ::= NOT expresionNot");
-               RESULT = new NodoUnario("!", en);
+               RESULT = new OperacionUnaria("!", en);
              :}
              | comparacion:c {:
                parser.printLog("Regla 3.2.1 expresionNot ::= comparacion");
@@ -287,7 +293,7 @@ expresionSumRes ::= expresionSumRes:e1 OP_SUMA expresionMultDiv:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede sumar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-                    NodoOperacion nodoSuma = new NodoOperacion("+",e1, e2);
+                    OperacionAritmetica nodoSuma = new OperacionAritmetica("+",e1, e2);
                     nodoSuma.setTipoDato(tipoRes);
                     RESULT = nodoSuma;
                   :}
@@ -298,8 +304,7 @@ expresionSumRes ::= expresionSumRes:e1 OP_SUMA expresionMultDiv:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede restar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-
-                    NodoOperacion nodoResta = new NodoOperacion("-",e1, e2);
+                    OperacionAritmetica nodoResta = new OperacionAritmetica("-",e1, e2);
                     nodoResta.setTipoDato(tipoRes); // <-- Guardamos el tipo evaluado
                     RESULT = nodoResta;
                   :}
@@ -316,8 +321,8 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
                         throw new Exception("Error de tipos: No se puede multiplicar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
 
-                    NodoOperacion nodo = new NodoOperacion("*",e1, e2);
-                    nodo.setTipoDato(tipoRes); // <-- Asignamos tipo
+                    OperacionAritmetica nodo = new OperacionAritmetica("*",e1, e2);
+                    nodo.setTipoDato(tipoRes);
                     RESULT = nodo;
                   :}
                   | expresionMultDiv:e1 OP_DIV expresionMenosU:e2 {:
@@ -327,9 +332,8 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede dividir " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-
-                    NodoOperacion nodo = new NodoOperacion("/", e1, e2);
-                    nodo.setTipoDato(tipoRes); // <-- Asignamos tipo
+                    OperacionAritmetica nodo = new OperacionAritmetica("/", e1, e2);
+                    nodo.setTipoDato(tipoRes);
                     RESULT = nodo;  :}
                  | expresionMenosU:emu {:
                  parser.printLog("Regla 3.4.2 expresionMultDiv ::= expresionMenosU");
@@ -338,37 +342,37 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
 
 comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.0 comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
-              NodoOperacion nodoIgual = new NodoOperacion("==", es1, es2);
+              OperacionComparar nodoIgual = new OperacionComparar("==", es1, es2);
               nodoIgual.setTipoDato("BOOL");
               RESULT = nodoIgual;
               :}
               | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.1 comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
-              NodoOperacion nodoDistinto = new NodoOperacion("!=", es1, es2);
+              OperacionComparar nodoDistinto = new OperacionComparar("!=", es1, es2);
               nodoDistinto.setTipoDato("BOOL");
               RESULT = nodoDistinto;
               :}
               | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.2 comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
-              NodoOperacion nodoMayor = new NodoOperacion(">", es1, es2);
+              OperacionComparar nodoMayor = new OperacionComparar(">", es1, es2);
               nodoMayor.setTipoDato("BOOL");
               RESULT = nodoMayor;
               :}
               | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.3 comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
-              NodoOperacion nodoMenor = new NodoOperacion("<", es1, es2);
+              OperacionComparar nodoMenor = new OperacionComparar("<", es1, es2);
               nodoMenor.setTipoDato("BOOL");
               RESULT = nodoMenor;
               :}
               | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.4 comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
-              NodoOperacion nodoMayorIgual = new NodoOperacion(">=", es1, es2);
+              OperacionComparar nodoMayorIgual = new OperacionComparar(">=", es1, es2);
               nodoMayorIgual.setTipoDato("BOOL");
               RESULT = nodoMayorIgual;
               :}
               | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.5 comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
-              NodoOperacion nodoMenorIgual = new NodoOperacion("<=", es1, es2);
+              OperacionComparar nodoMenorIgual = new OperacionComparar("<=", es1, es2);
               nodoMenorIgual.setTipoDato("BOOL");
               RESULT = nodoMenorIgual;
               :}
@@ -379,7 +383,7 @@ comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
 
 expresionMenosU ::= OP_RESTA expresionMenosU:e {:
                 parser.printLog("Regla 3.6.0 expresionMenosU ::= OP_RESTA expresionMenosU");
-                NodoUnario nodo = new NodoUnario("-", e);
+                OperacionUnaria nodo = new OperacionUnaria("-", e);
                 nodo.setTipoDato(e.getTipoDato());
                 RESULT = nodo;
                 :} %prec UMENOS
@@ -398,7 +402,7 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
         if (!Parser.tablaSimbolos.exists(id)) {
             throw new Exception("Error semántico: Variable '" + id + "' no declarada.");
         }
-        NodoIdentificador nodo = new NodoIdentificador(id);
+        Identificador nodo = new Identificador(id);
         nodo.setTipoDato(Parser.tablaSimbolos.getType(id));
         RESULT = nodo;
         :}
@@ -421,21 +425,21 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
     if (!e.getTipoDato().equals("INT")) {
         throw new Exception("Error semántico: El índice del arreglo '" + id + "' debe ser una expresión entera. Se recibió: " + e.getTipoDato());
     }
-    NodoAccesoArreglo nodo = new NodoAccesoArreglo(id, e);
+    AccesoArreglo nodo = new AccesoArreglo(id, e);
     nodo.setTipoDato("FLOAT");
     RESULT = nodo;
 :}
             | READ_INT PAR_A PAR_C   {:
             parser.printLog("Regla 3.7.4 expresion ::= READ_INT PAR_A PAR_C");
-            RESULT = new NodoLlamada("READ_INT", new ArrayList<>());
+            RESULT = new Read("INT");
             :}
             | READ_FLOAT PAR_A PAR_C {:
             parser.printLog("Regla 3.7.5 expresion ::= READ_FLOAT PAR_A PAR_C");
-            RESULT = new NodoLlamada("READ_FLOAT", new ArrayList<>());
+            RESULT = new Read("FLOAT");
             :}
             | READ_BOOL PAR_A PAR_C  {:
             parser.printLog("Regla 3.7.6 expresion ::= READ_BOOL PAR_A PAR_C");
-            RESULT = new NodoLlamada("READ_BOOL", new ArrayList<>());
+            RESULT = new Read("BOOL");
             :}
             | sum_acum:sm {:
             parser.printLog("Regla 3.7.7 expresion ::= sum_acum");
@@ -468,12 +472,12 @@ valorLiteral ::= CTE_INT:n {:
 
 arreglo_literal ::= CORCH_A lista_expresiones:le CORCH_C {:
                     parser.printLog("Regla 3.12.0 arreglo_literal ::= CORCH_A lista_expresiones CORCH_C");
-                    NodoArreglo nodo = new NodoArreglo(le);
+                    Arreglo nodo = new Arreglo(le);
                     nodo.setTipoDato("FLOAT_ARRAY");
                     RESULT = nodo;
                   :}
                 | CORCH_A CORCH_C {:
-                    NodoArreglo nodo = new NodoArreglo(new ArrayList<>());
+                    Arreglo nodo = new Arreglo(new ArrayList<>());
                     nodo.setTipoDato("FLOAT_ARRAY");
                     RESULT = nodo;
                   :};
@@ -487,7 +491,7 @@ cte_string ::= CTE_STR:s {:
             :};
 
 sum_acum ::= SUMA_ACUM PAR_A expresionOr:limite COMA ID:idArreglo PAR_C {:
-            parser.printLog("Regla 3.10.1 sum_acum con identificador (AST Nativo)");
+            parser.printLog("Regla 3.10.1 SUMA_ACUM PAR_A expresionOr COMA ID PAR_C");
 
             if (!Parser.tablaSimbolos.exists(idArreglo)) {
                 throw new Exception("Error semántico: Variable '" + idArreglo + "' no declarada.");
@@ -498,16 +502,16 @@ sum_acum ::= SUMA_ACUM PAR_A expresionOr:limite COMA ID:idArreglo PAR_C {:
                  throw new Exception("Error semántico: Suma Acumulativa requiere un float_array.");
             }
 
-            NodoIdentificador nodoArr = new NodoIdentificador(idArreglo);
+            Identificador nodoArr = new Identificador(idArreglo);
             nodoArr.setTipoDato(tipoArreglo);
 
-            RESULT = new NodoSumaAcumulativa(limite, nodoArr, idArreglo);
+            RESULT = new SumaAcumulativa(limite, nodoArr, idArreglo);
           :}
           | SUMA_ACUM PAR_A expresionOr:limite COMA arreglo_literal:al PAR_C {:
-            parser.printLog("Regla 3.10.0 sum_acum con lista literal (AST Nativo)");
+            parser.printLog("Regla 3.10.0 SUMA_ACUM PAR_A expresionOr COMA arreglo_literal PAR_C");
             // NOTA: Para el arreglo literal generamos una variable temporal en memoria
             String idTemp = "_arr_temp_" + CodeGeneratorHelper.getNewLabel();
-            RESULT = new NodoSumaAcumulativa(limite, al, idTemp);
+            RESULT = new SumaAcumulativa(limite, al, idTemp);
           :};
 
 /* --------------------------------------------------------
@@ -521,7 +525,7 @@ lista_expresiones ::= lista_expresiones:li COMA expresionOr:e {:
                     :}
                     | expresionOr:e {:
                     parser.printLog("Regla 3.11.1 lista_expresiones ::= expresionOr");
-                    ArrayList<NodoC> le = new ArrayList<>();
+                    ArrayList<Expresion> le = new ArrayList<>();
                     le.add(e);
                     RESULT = le;
                     :};

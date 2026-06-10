@@ -3,18 +3,18 @@ package ast;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodoSumaAcumulativa extends NodoC {
+public class SumaAcumulativa extends Expresion {
 
-    private NodoC limite;
-    private NodoC arreglo;
+    private Expresion limite;
+    private Expresion arreglo;
 
     // Nodos sintéticos (Los hijos que arman el árbol del pizarrón)
-    private NodoAsignacion asigSuma;
-    private NodoAsignacion asigIndice;
-    private NodoWhile bucleWhile;
+    private Asignacion asigSuma;
+    private Asignacion asigIndice;
+    private While bucleWhile;
 
     // Pasamos el ID del arreglo como String porque NodoAccesoArreglo lo necesita así
-    public NodoSumaAcumulativa(NodoC limite, NodoC arreglo, String nombreArreglo) {
+    public SumaAcumulativa(Expresion limite, Expresion arreglo, String nombreArreglo) {
         this.limite = limite;
         this.arreglo = arreglo;
         this.setTipoDato("FLOAT");
@@ -22,44 +22,44 @@ public class NodoSumaAcumulativa extends NodoC {
         // === 1. FABRICAR EL SUB-ÁRBOL SINTÉTICO (Árbol puro) ===
 
         // a) sumatoria = 0.0
-        NodoIdentificador idSum1 = new NodoIdentificador("_sum_temp"); idSum1.setTipoDato("FLOAT");
+        Identificador idSum1 = new Identificador("_sum_temp"); idSum1.setTipoDato("FLOAT");
         NodoHoja ceroFloat = new NodoHoja("0.0"); ceroFloat.setTipoDato("FLOAT");
-        this.asigSuma = new NodoAsignacion(idSum1, ceroFloat);
+        this.asigSuma = new Asignacion(idSum1, ceroFloat);
 
         // b) indice = 0
-        NodoIdentificador idIndice1 = new NodoIdentificador("_i_temp"); idIndice1.setTipoDato("INT");
+        Identificador idIndice1 = new Identificador("_i_temp"); idIndice1.setTipoDato("INT");
         NodoHoja ceroInt = new NodoHoja("0"); ceroInt.setTipoDato("INT");
-        this.asigIndice = new NodoAsignacion(idIndice1, ceroInt);
+        this.asigIndice = new Asignacion(idIndice1, ceroInt);
 
         // c) Condición del While: indice < limite
-        NodoIdentificador idIndice2 = new NodoIdentificador("_i_temp"); idIndice2.setTipoDato("INT");
-        NodoOperacion condicion = new NodoOperacion("<", idIndice2, limite); condicion.setTipoDato("BOOL");
+        Identificador idIndice2 = new Identificador("_i_temp"); idIndice2.setTipoDato("INT");
+        OperacionComparar condicion = new OperacionComparar("<", idIndice2, limite); condicion.setTipoDato("BOOL");
 
         // d) Cuerpo del While: sumatoria = sumatoria + arreglo[indice]
-        NodoIdentificador idIndice3 = new NodoIdentificador("_i_temp"); idIndice3.setTipoDato("INT");
-        NodoAccesoArreglo acceso = new NodoAccesoArreglo(nombreArreglo, idIndice3); acceso.setTipoDato("FLOAT");
+        Identificador idIndice3 = new Identificador("_i_temp"); idIndice3.setTipoDato("INT");
+        AccesoArreglo acceso = new AccesoArreglo(nombreArreglo, idIndice3); acceso.setTipoDato("FLOAT");
 
-        NodoIdentificador idSum2 = new NodoIdentificador("_sum_temp"); idSum2.setTipoDato("FLOAT");
-        NodoOperacion suma = new NodoOperacion("+", idSum2, acceso); suma.setTipoDato("FLOAT");
+        Identificador idSum2 = new Identificador("_sum_temp"); idSum2.setTipoDato("FLOAT");
+        OperacionAritmetica suma = new OperacionAritmetica("+", idSum2, acceso); suma.setTipoDato("FLOAT");
 
-        NodoIdentificador idSum3 = new NodoIdentificador("_sum_temp"); idSum3.setTipoDato("FLOAT");
-        NodoAsignacion asigAcumular = new NodoAsignacion(idSum3, suma);
+        Identificador idSum3 = new Identificador("_sum_temp"); idSum3.setTipoDato("FLOAT");
+        Asignacion asigAcumular = new Asignacion(idSum3, suma);
 
         // e) Incremento: indice = indice + 1
-        NodoIdentificador idIndice4 = new NodoIdentificador("_i_temp"); idIndice4.setTipoDato("INT");
+        Identificador idIndice4 = new Identificador("_i_temp"); idIndice4.setTipoDato("INT");
         NodoHoja unoInt = new NodoHoja("1"); unoInt.setTipoDato("INT");
-        NodoOperacion incremento = new NodoOperacion("+", idIndice4, unoInt); incremento.setTipoDato("INT");
+        OperacionAritmetica incremento = new OperacionAritmetica("+", idIndice4, unoInt); incremento.setTipoDato("INT");
 
-        NodoIdentificador idIndice5 = new NodoIdentificador("_i_temp"); idIndice5.setTipoDato("INT");
-        NodoAsignacion asigIncrementar = new NodoAsignacion(idIndice5, incremento);
+        Identificador idIndice5 = new Identificador("_i_temp"); idIndice5.setTipoDato("INT");
+        Asignacion asigIncrementar = new Asignacion(idIndice5, incremento);
 
         // f) Armar el bloque del While
-        List<NodoC> bloqueWhile = new ArrayList<>();
+        List<Nodo> bloqueWhile = new ArrayList<>();
         bloqueWhile.add(asigAcumular);
         bloqueWhile.add(asigIncrementar);
 
         // g) Crear el Nodo While final
-        this.bucleWhile = new NodoWhile(condicion, bloqueWhile, new ArrayList<>());
+        this.bucleWhile = new While(condicion, bloqueWhile, new ArrayList<>());
     }
 
     @Override
@@ -68,7 +68,7 @@ public class NodoSumaAcumulativa extends NodoC {
     }
 
     @Override
-    public List<NodoC> getHijos() {
+    public List<Nodo> getHijos() {
         // === LA MAGIA PARA GRAPHVIZ ===
         // Acá mostramos exactamente lo que el profe hizo en el pizarrón
         return List.of(asigSuma, asigIndice, bucleWhile);

@@ -2,11 +2,11 @@ package ast;
 
 import llvm.CodeGeneratorHelper;
 
-public class NodoDeclaracion extends NodoC {
+public class Declaracion extends Expresion {
     private String tipo;
     private String id;
 
-    public NodoDeclaracion(String tipo, String id) {
+    public Declaracion(String tipo, String id) {
         this.tipo = tipo;
         this.id = id;
     }

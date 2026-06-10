@@ -4,13 +4,13 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class NodoIf extends Sentencia {
-    private final NodoC condicion;
-    private final List<NodoC> bloqueThen;
-    private final List<NodoC> elifs;
-    private final List<NodoC> bloqueElse;
+public class If extends Expresion {
+    private final Expresion condicion;
+    private final List<Nodo> bloqueThen;
+    private final List<Nodo> elifs;
+    private final List<Nodo> bloqueElse;
 
-    public NodoIf(NodoC condicion, List<NodoC> bloqueThen, List<NodoC> elifs, List<NodoC> bloqueElse) {
+    public If(Expresion condicion, List<Nodo> bloqueThen, List<Nodo> elifs, List<Nodo> bloqueElse) {
         this.condicion = condicion;
         this.bloqueThen = bloqueThen;
         this.elifs = elifs;
@@ -23,8 +23,8 @@ public class NodoIf extends Sentencia {
     }
 
     @Override
-    public List<NodoC> getHijos() {
-        List<NodoC> hijos = new ArrayList<>();
+    public List<Nodo> getHijos() {
+        List<Nodo> hijos = new ArrayList<>();
         hijos.add(condicion);
         if (bloqueThen != null) hijos.addAll(bloqueThen);
         if (elifs != null) hijos.addAll(elifs);
@@ -67,7 +67,7 @@ public class NodoIf extends Sentencia {
         codigo.append("\n").append(labelThen).append(":\n");
         StringBuilder codigoThen = new StringBuilder();
         if (this.bloqueThen != null) {
-            for (NodoC sent : this.bloqueThen) {
+            for (Nodo sent : this.bloqueThen) {
                 codigoThen.append(sent.generarCodigo());
             }
         }
@@ -81,7 +81,7 @@ public class NodoIf extends Sentencia {
             for (int i = 0; i < this.elifs.size(); i++) {
                 codigo.append("\n").append(labelsElif.get(i)).append(":\n");
 
-                NodoIf elifNodo = (NodoIf) this.elifs.get(i);
+                If elifNodo = (If) this.elifs.get(i);
 
                 // Acá armamos la cadena: si es falso, va al siguiente ELIF o al ELSE
                 String destinoFalsoElif;
@@ -100,7 +100,7 @@ public class NodoIf extends Sentencia {
                 codigo.append("\n").append(labelElifThen).append(":\n");
                 StringBuilder codigoElifThen = new StringBuilder();
                 if (elifNodo.bloqueThen != null) {
-                    for (NodoC sent : elifNodo.bloqueThen) {
+                    for (Nodo sent : elifNodo.bloqueThen) {
                         codigoElifThen.append(sent.generarCodigo());
                     }
                 }
@@ -115,7 +115,7 @@ public class NodoIf extends Sentencia {
         if (this.bloqueElse != null && !this.bloqueElse.isEmpty()) {
             codigo.append("\n").append(labelElse).append(":\n");
             StringBuilder codigoElse = new StringBuilder();
-            for (NodoC sentElse : this.bloqueElse) {
+            for (Nodo sentElse : this.bloqueElse) {
                 codigoElse.append(sentElse.generarCodigo());
             }
             codigo.append(codigoElse);
