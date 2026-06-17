@@ -8,6 +8,12 @@ public class SumaAcumulativa extends Expresion {
     private Expresion limite;
     private Expresion arreglo;
 
+    // 1. Contador global para TODAS las instancias de SumaAcumulativa
+    private static int contadorSumaAcumulativa = 0;
+
+    // 2. ID único para ESTA instancia en particular
+    private final int idSuma;
+
     // Nodos sintéticos (Los hijos que arman el árbol del pizarrón)
     private Asignacion asigSuma;
     private Asignacion asigIndice;
@@ -19,7 +25,9 @@ public class SumaAcumulativa extends Expresion {
         this.arreglo = arreglo;
         this.setTipoDato("FLOAT");
 
-        // === 1. FABRICAR EL SUB-ÁRBOL SINTÉTICO (Árbol puro) ===
+        this.idSuma = ++contadorSumaAcumulativa;
+
+        this.setTipoDato("FLOAT");
 
         // a) sumatoria = 0.0
         Identificador idSum1 = new Identificador("_sum_temp"); idSum1.setTipoDato("FLOAT");
@@ -69,14 +77,18 @@ public class SumaAcumulativa extends Expresion {
 
     @Override
     public List<Nodo> getHijos() {
-        // === LA MAGIA PARA GRAPHVIZ ===
-        // Acá mostramos exactamente lo que el profe hizo en el pizarrón
         return List.of(asigSuma, asigIndice, bucleWhile);
     }
 
     @Override
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
+
+        String varSuma = "%suma_acum_" + this.idSuma;
+        String varIndice = "%indice_acum_" + this.idSuma;
+
+        String labelLoop = "loop_acum_" + this.idSuma;
+        String labelEnd = "end_acum_" + this.idSuma;
 
         // 1. Crear las variables temporales en memoria LLVM (alloca)
         codigo.append("  %_sum_temp = alloca double\n");

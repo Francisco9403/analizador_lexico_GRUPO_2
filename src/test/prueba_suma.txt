@@ -1,12 +1,15 @@
 integer: cantidad
-float: resultado
-float_array[3]: valores
+float: resultado, resultado_2
+float_array[3]: valores, valores_2
 
 PROGRAM
     cantidad = 3
     valores = [10.5, 20.0, 5.5]
+    valores_2 = [5.5, 2.5, 12.0]
 
     % Prueba especifica de la funcion externa
     resultado = suma_cumulativa(cantidad, valores)
+    resultado2 = suma_acumulativa(cantidad, valores_2)
 
     PRINT("Resultado de la suma:", resultado)
+    PRINT("Resultado de la suma 2:", resultado2)

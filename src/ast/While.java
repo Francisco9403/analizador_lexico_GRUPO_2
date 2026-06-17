@@ -4,7 +4,7 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class While extends Expresion {
+public class While extends Nodo {
     private final Expresion condicion;
     private final List<Nodo> cuerpo;
     private final List<Nodo> altWhiles;
@@ -23,9 +23,20 @@ public class While extends Expresion {
     @Override
     public List<Nodo> getHijos() {
         List<Nodo> hijos = new ArrayList<>();
-        hijos.add(condicion);
-        if (cuerpo != null) hijos.addAll(cuerpo);
-        if (altWhiles != null) hijos.addAll(altWhiles);
+
+        // La condición queda directa (o podés agruparla también)
+        hijos.add(new Bloque("Condición", List.of(condicion)));
+
+        // Agrupamos el cuerpo principal
+        if (cuerpo != null && !cuerpo.isEmpty()) {
+            hijos.add(new Bloque("Cuerpo Bucle", cuerpo));
+        }
+
+        // Agrupamos el cuerpo alternativo (si lo usás)
+        if (altWhiles != null && !altWhiles.isEmpty()) {
+            hijos.add(new Bloque("Cuerpo Alternativo", altWhiles));
+        }
+
         return hijos;
     }
 

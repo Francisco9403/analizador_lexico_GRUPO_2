@@ -4,7 +4,7 @@ import llvm.CodeGeneratorHelper;
 import java.util.ArrayList;
 import java.util.List;
 
-public class If extends Expresion {
+public class If extends Nodo {
     private final Expresion condicion;
     private final List<Nodo> bloqueThen;
     private final List<Nodo> elifs;
@@ -18,17 +18,19 @@ public class If extends Expresion {
     }
 
     @Override
-    public String getEtiqueta() {
-        return "IF-ELIF-ELSE";
-    }
+    public String getEtiqueta() { return "IF"; }
 
     @Override
     public List<Nodo> getHijos() {
         List<Nodo> hijos = new ArrayList<>();
-        hijos.add(condicion);
-        if (bloqueThen != null) hijos.addAll(bloqueThen);
-        if (elifs != null) hijos.addAll(elifs);
-        if (bloqueElse != null) hijos.addAll(bloqueElse);
+        // Agrupamos visualmente para Graphviz
+        hijos.add(new Bloque("Condición", List.of(condicion)));
+        if (bloqueThen != null && !bloqueThen.isEmpty()) {
+            hijos.add(new Bloque("THEN", bloqueThen));
+        }
+        if (bloqueElse != null && !bloqueElse.isEmpty()) {
+            hijos.add(new Bloque("ELSE", bloqueElse));
+        }
         return hijos;
     }
 
@@ -42,90 +44,39 @@ public class If extends Expresion {
     @Override
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
-
         String labelThen = CodeGeneratorHelper.getNewLabel();
+        String labelElse = (bloqueElse != null && !bloqueElse.isEmpty()) ? CodeGeneratorHelper.getNewLabel() : null;
         String labelEnd = CodeGeneratorHelper.getNewLabel();
+        String destinoFalso = (labelElse != null) ? labelElse : labelEnd;
 
-        // Si hay un ELSE, reservamos su etiqueta, si no, apuntamos al final
-        String labelElse = (this.bloqueElse != null && !this.bloqueElse.isEmpty()) ? CodeGeneratorHelper.getNewLabel() : labelEnd;
-
-        List<String> labelsElif = new ArrayList<>();
-        if (this.elifs != null) {
-            for (int i = 0; i < this.elifs.size(); i++) {
-                labelsElif.add(CodeGeneratorHelper.getNewLabel());
-            }
-        }
-
-        // 1. Evaluar IF principal
-        String destinoFalsoPrincipal = labelsElif.isEmpty() ? labelElse : labelsElif.get(0);
-
-        codigo.append(this.condicion.generarCodigo());
+        // 1. Evaluar condición
+        codigo.append(condicion.generarCodigo());
         codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
-                this.condicion.getIrRef(), labelThen, destinoFalsoPrincipal));
+                condicion.getIrRef(), labelThen, destinoFalso));
 
-        // 2. Bloque THEN principal
+        // 2. Bloque THEN
         codigo.append("\n").append(labelThen).append(":\n");
-        StringBuilder codigoThen = new StringBuilder();
-        if (this.bloqueThen != null) {
-            for (Nodo sent : this.bloqueThen) {
-                codigoThen.append(sent.generarCodigo());
-            }
+        StringBuilder codThen = new StringBuilder();
+        if (bloqueThen != null) {
+            for (Nodo sent : bloqueThen) codThen.append(sent.generarCodigo());
         }
-        codigo.append(codigoThen);
-        if (!terminaConSalto(codigoThen.toString())) {
+        codigo.append(codThen);
+        if (!terminaConSalto(codThen.toString())) {
             codigo.append(String.format("  br label %%%s\n", labelEnd));
         }
 
-        // 3. Cadena de bloques ELIF
-        if (this.elifs != null && !this.elifs.isEmpty()) {
-            for (int i = 0; i < this.elifs.size(); i++) {
-                codigo.append("\n").append(labelsElif.get(i)).append(":\n");
-
-                If elifNodo = (If) this.elifs.get(i);
-
-                // Acá armamos la cadena: si es falso, va al siguiente ELIF o al ELSE
-                String destinoFalsoElif;
-                if (i < this.elifs.size() - 1) {
-                    destinoFalsoElif = labelsElif.get(i + 1);
-                } else {
-                    destinoFalsoElif = labelElse;
-                }
-
-                String labelElifThen = CodeGeneratorHelper.getNewLabel();
-
-                codigo.append(elifNodo.condicion.generarCodigo());
-                codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n",
-                        elifNodo.condicion.getIrRef(), labelElifThen, destinoFalsoElif));
-
-                codigo.append("\n").append(labelElifThen).append(":\n");
-                StringBuilder codigoElifThen = new StringBuilder();
-                if (elifNodo.bloqueThen != null) {
-                    for (Nodo sent : elifNodo.bloqueThen) {
-                        codigoElifThen.append(sent.generarCodigo());
-                    }
-                }
-                codigo.append(codigoElifThen);
-                if (!terminaConSalto(codigoElifThen.toString())) {
-                    codigo.append(String.format("  br label %%%s\n", labelEnd));
-                }
-            }
-        }
-
-        // 4. Bloque ELSE final
-        if (this.bloqueElse != null && !this.bloqueElse.isEmpty()) {
+        // 3. Bloque ELSE
+        if (labelElse != null) {
             codigo.append("\n").append(labelElse).append(":\n");
-            StringBuilder codigoElse = new StringBuilder();
-            for (Nodo sentElse : this.bloqueElse) {
-                codigoElse.append(sentElse.generarCodigo());
-            }
-            codigo.append(codigoElse);
-            if (!terminaConSalto(codigoElse.toString())) {
+            StringBuilder codElse = new StringBuilder();
+            for (Nodo sentElse : bloqueElse) codElse.append(sentElse.generarCodigo());
+            codigo.append(codElse);
+            if (!terminaConSalto(codElse.toString())) {
                 codigo.append(String.format("  br label %%%s\n", labelEnd));
             }
         }
 
         codigo.append("\n").append(labelEnd).append(":\n");
-
         return codigo.toString();
     }
 }

@@ -40,6 +40,25 @@ parser code {:
         // Lanzamos la excepción directamente
         throw new SyntaxException(mensaje);
     }
+
+    public Expresion[] igualarTipos(Expresion e1, Expresion e2) {
+            String t1 = e1.getTipoDato();
+            String t2 = e2.getTipoDato();
+
+            if ("FLOAT".equals(t1) && "INT".equals(t2)) {
+                e2 = new CastIntToFloat(e2); // Casteamos el derecho
+            } else if ("INT".equals(t1) && "FLOAT".equals(t2)) {
+                e1 = new CastIntToFloat(e1); // Casteamos el izquierdo
+            }
+            return new Expresion[]{e1, e2};
+        }
+
+        public Expresion castearParaAsignacion(Expresion expr, String tipoVariable) {
+            if ("FLOAT".equals(tipoVariable) && "INT".equals(expr.getTipoDato())) {
+                return new CastIntToFloat(expr);
+            }
+            return expr;
+        }
 :};
 
 terminal IF, ELIF, ELSE, WHILE, ALT_WHILE, BREAK, CONTINUE, PRINT;
@@ -66,6 +85,7 @@ nonterminal ArrayList<Nodo> elif_part, else_part, alt_while_part;
 nonterminal Nodo sentencia, sentencia_control;
 nonterminal Impresion impresion;
 nonterminal If sentencia_if;
+nonterminal ArrayList<Nodo> tail_if;
 nonterminal While sentencia_while;
 nonterminal Expresion expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
 nonterminal SumaAcumulativa sum_acum;
@@ -293,7 +313,8 @@ expresionSumRes ::= expresionSumRes:e1 OP_SUMA expresionMultDiv:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede sumar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-                    OperacionAritmetica nodoSuma = new OperacionAritmetica("+",e1, e2);
+                    Expresion[] operandos = parser.igualarTipos(e1, e2);
+                    OperacionAritmetica nodoSuma = new OperacionAritmetica("+", operandos[0], operandos[1]);
                     nodoSuma.setTipoDato(tipoRes);
                     RESULT = nodoSuma;
                   :}
@@ -304,8 +325,9 @@ expresionSumRes ::= expresionSumRes:e1 OP_SUMA expresionMultDiv:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede restar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-                    OperacionAritmetica nodoResta = new OperacionAritmetica("-",e1, e2);
-                    nodoResta.setTipoDato(tipoRes); // <-- Guardamos el tipo evaluado
+                    Expresion[] operandos = parser.igualarTipos(e1, e2);
+                    OperacionAritmetica nodoResta = new OperacionAritmetica("-",operandos[0], operandos[1]);
+                    nodoResta.setTipoDato(tipoRes);
                     RESULT = nodoResta;
                   :}
                 | expresionMultDiv:em {:
@@ -320,8 +342,8 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede multiplicar " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-
-                    OperacionAritmetica nodo = new OperacionAritmetica("*",e1, e2);
+                    Expresion[] operandos = parser.igualarTipos(e1, e2);
+                    OperacionAritmetica nodo = new OperacionAritmetica("*",operandos[0], operandos[1]);
                     nodo.setTipoDato(tipoRes);
                     RESULT = nodo;
                   :}
@@ -332,7 +354,8 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
                     if (tipoRes.equals("ERROR")) {
                         throw new Exception("Error de tipos: No se puede dividir " + e1.getTipoDato() + " con " + e2.getTipoDato());
                     }
-                    OperacionAritmetica nodo = new OperacionAritmetica("/", e1, e2);
+                    Expresion[] operandos = parser.igualarTipos(e1, e2);
+                    OperacionAritmetica nodo = new OperacionAritmetica("/", operandos[0], operandos[1]);
                     nodo.setTipoDato(tipoRes);
                     RESULT = nodo;  :}
                  | expresionMenosU:emu {:
@@ -342,37 +365,43 @@ expresionMultDiv ::= expresionMultDiv:e1 OP_MULT expresionMenosU:e2 {:
 
 comparacion ::= expresionSumRes:es1 COMP_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.0 comparacion ::= expresionSumRes COMP_IGUAL expresionSumRes");
-              OperacionComparar nodoIgual = new OperacionComparar("==", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoIgual = new OperacionComparar("==", operandos[0], operandos[1]);
               nodoIgual.setTipoDato("BOOL");
               RESULT = nodoIgual;
               :}
               | expresionSumRes:es1 COMP_DISTINTO expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.1 comparacion ::= expresionSumRes COMP_DISTINTO expresionSumRes");
-              OperacionComparar nodoDistinto = new OperacionComparar("!=", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoDistinto = new OperacionComparar("!=", operandos[0], operandos[1]);
               nodoDistinto.setTipoDato("BOOL");
               RESULT = nodoDistinto;
               :}
               | expresionSumRes:es1 COMP_MAYOR expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.2 comparacion ::= expresionSumRes COMP_MAYOR expresionSumRes");
-              OperacionComparar nodoMayor = new OperacionComparar(">", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoMayor = new OperacionComparar(">", operandos[0], operandos[1]);
               nodoMayor.setTipoDato("BOOL");
               RESULT = nodoMayor;
               :}
               | expresionSumRes:es1 COMP_MENOR expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.3 comparacion ::= expresionSumRes COMP_MENOR expresionSumRes");
-              OperacionComparar nodoMenor = new OperacionComparar("<", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoMenor = new OperacionComparar("<", operandos[0], operandos[1]);
               nodoMenor.setTipoDato("BOOL");
               RESULT = nodoMenor;
               :}
               | expresionSumRes:es1 COMP_MAYOR_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.4 comparacion ::= expresionSumRes COMP_MAYOR_IGUAL expresionSumRes");
-              OperacionComparar nodoMayorIgual = new OperacionComparar(">=", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoMayorIgual = new OperacionComparar(">=", operandos[0], operandos[1]);
               nodoMayorIgual.setTipoDato("BOOL");
               RESULT = nodoMayorIgual;
               :}
               | expresionSumRes:es1 COMP_MENOR_IGUAL expresionSumRes:es2 {:
               parser.printLog("Regla 3.5.5 comparacion ::= expresionSumRes COMP_MENOR_IGUAL expresionSumRes");
-              OperacionComparar nodoMenorIgual = new OperacionComparar("<=", es1, es2);
+              Expresion[] operandos = parser.igualarTipos(es1, es2);
+              OperacionComparar nodoMenorIgual = new OperacionComparar("<=", operandos[0], operandos[1]);
               nodoMenorIgual.setTipoDato("BOOL");
               RESULT = nodoMenorIgual;
               :}
