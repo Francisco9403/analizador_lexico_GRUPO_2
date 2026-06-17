@@ -7,13 +7,16 @@ import java.util.List;
 public class If extends Nodo {
     private final Expresion condicion;
     private final List<Nodo> bloqueThen;
-    private final List<Nodo> elifs;
-    private final List<Nodo> bloqueElse;
+    private List<Nodo> bloqueElse; // Ahora no es final para poder inyectarle los ELIFs anidados
 
-    public If(Expresion condicion, List<Nodo> bloqueThen, List<Nodo> elifs, List<Nodo> bloqueElse) {
+    public If(Expresion condicion, List<Nodo> bloqueThen, List<Nodo> bloqueElse) {
         this.condicion = condicion;
         this.bloqueThen = bloqueThen;
-        this.elifs = elifs;
+        this.bloqueElse = bloqueElse != null ? bloqueElse : new ArrayList<>();
+    }
+
+    // Setter clave para el Desugaring en el Parser
+    public void setBloqueElse(List<Nodo> bloqueElse) {
         this.bloqueElse = bloqueElse;
     }
 
@@ -23,8 +26,8 @@ public class If extends Nodo {
     @Override
     public List<Nodo> getHijos() {
         List<Nodo> hijos = new ArrayList<>();
-        // Agrupamos visualmente para Graphviz
         hijos.add(new Bloque("Condición", List.of(condicion)));
+
         if (bloqueThen != null && !bloqueThen.isEmpty()) {
             hijos.add(new Bloque("THEN", bloqueThen));
         }

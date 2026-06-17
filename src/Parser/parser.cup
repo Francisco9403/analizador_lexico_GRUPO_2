@@ -199,7 +199,9 @@ asignacion ::= ID:id ASIG expresionOr:e {:
         throw new Exception("Error de tipos: no se puede asignar " + e.getTipoDato() + " a " + id + " (" + tipoVar + ")");
     }
 
-    Asignacion nodo = new Asignacion(new Identificador(id), e);
+    Expresion exprCasteada = parser.castearParaAsignacion(e, tipoVar);
+    Asignacion nodo = new Asignacion(new Identificador(id), exprCasteada);
+
     nodo.setTipoDato(tipoVar); // Decoramos el nodo
     RESULT = nodo;
 :};
@@ -212,6 +214,11 @@ impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
                 String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
                 RESULT = new Impresion(textoLimpio, e);
+            :}
+            | PRINT PAR_A cte_string:s PAR_C {:
+                parser.printLog("Regla 2.4.2 impresion ::= PRINT PAR_A CTE_STR PAR_C");
+                String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
+                RESULT = new Impresion(textoLimpio);
             :};
 
 bloque ::= V_INDENT lista_sentencias:ls V_DEDENT {:
@@ -238,8 +245,25 @@ sentencia_control ::= BREAK {:
                     :};
 
 sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {:
-                  parser.printLog("Regla 2.8.0 sentencia_if ::= IF expresionOr bloque elif_part else_part");
-                  RESULT = new If(c, b, el, es);
+                  parser.printLog("Regla 2.8.0 sentencia_if ::= IF expresionOr bloque elif_part else_part (Reescritura Nativa)");
+
+                  // 1. Empezamos con el bloque ELSE final original
+                  List<Nodo> bloqueElseActual = es;
+
+                  // 2. Recorremos los ELIFs de atrás para adelante (Fold Right)
+                  for (int i = el.size() - 1; i >= 0; i--) {
+                      If nodoElif = (If) el.get(i);
+
+                      // El ELSE de este ELIF es lo que veníamos arrastrando
+                      nodoElif.setBloqueElse(bloqueElseActual);
+
+                      // Ahora ESTE nodo ELIF completo se convierte en el bloque ELSE del nivel superior
+                      bloqueElseActual = new ArrayList<>();
+                      bloqueElseActual.add(nodoElif);
+                  }
+
+                  // 3. Finalmente armamos el IF raíz, pasándole la muñeca rusa que armamos como ELSE
+                  RESULT = new If(c, b, bloqueElseActual);
                :};
 
 sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {:
@@ -249,7 +273,8 @@ sentencia_while ::= WHILE expresionOr:c bloque:b alt_while_part:aw {:
 
 elif_part ::= elif_part:el ELIF expresionOr:c bloque:b {:
              parser.printLog("Regla 2.10.0 elif_part ::= elif_part ELIF expresionOr bloque");
-             el.add(new If(c, b, new ArrayList<>(), new ArrayList<>()));
+             // Guardamos un IF temporal sin ELSE (se lo inyectamos arriba en sentencia_if)
+             el.add(new If(c, b, new ArrayList<>()));
              RESULT = el;
             :}
             | /* vacio */ {:

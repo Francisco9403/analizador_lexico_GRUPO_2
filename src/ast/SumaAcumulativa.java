@@ -19,6 +19,10 @@ public class SumaAcumulativa extends Expresion {
     private Asignacion asigIndice;
     private While bucleWhile;
 
+    // Nombres únicos para LLVM
+    private String nombreVarSum;
+    private String nombreVarIndice;
+
     // Pasamos el ID del arreglo como String porque NodoAccesoArreglo lo necesita así
     public SumaAcumulativa(Expresion limite, Expresion arreglo, String nombreArreglo) {
         this.limite = limite;
@@ -27,38 +31,40 @@ public class SumaAcumulativa extends Expresion {
 
         this.idSuma = ++contadorSumaAcumulativa;
 
-        this.setTipoDato("FLOAT");
+        // --- ARREGLO: Variables con nombre único para LLVM ---
+        this.nombreVarSum = "_sum_temp_" + this.idSuma;
+        this.nombreVarIndice = "_i_temp_" + this.idSuma;
 
         // a) sumatoria = 0.0
-        Identificador idSum1 = new Identificador("_sum_temp"); idSum1.setTipoDato("FLOAT");
+        Identificador idSum1 = new Identificador(this.nombreVarSum); idSum1.setTipoDato("FLOAT");
         NodoHoja ceroFloat = new NodoHoja("0.0"); ceroFloat.setTipoDato("FLOAT");
         this.asigSuma = new Asignacion(idSum1, ceroFloat);
 
         // b) indice = 0
-        Identificador idIndice1 = new Identificador("_i_temp"); idIndice1.setTipoDato("INT");
+        Identificador idIndice1 = new Identificador(this.nombreVarIndice); idIndice1.setTipoDato("INT");
         NodoHoja ceroInt = new NodoHoja("0"); ceroInt.setTipoDato("INT");
         this.asigIndice = new Asignacion(idIndice1, ceroInt);
 
         // c) Condición del While: indice < limite
-        Identificador idIndice2 = new Identificador("_i_temp"); idIndice2.setTipoDato("INT");
+        Identificador idIndice2 = new Identificador(this.nombreVarIndice); idIndice2.setTipoDato("INT");
         OperacionComparar condicion = new OperacionComparar("<", idIndice2, limite); condicion.setTipoDato("BOOL");
 
         // d) Cuerpo del While: sumatoria = sumatoria + arreglo[indice]
-        Identificador idIndice3 = new Identificador("_i_temp"); idIndice3.setTipoDato("INT");
+        Identificador idIndice3 = new Identificador(this.nombreVarIndice); idIndice3.setTipoDato("INT");
         AccesoArreglo acceso = new AccesoArreglo(nombreArreglo, idIndice3); acceso.setTipoDato("FLOAT");
 
-        Identificador idSum2 = new Identificador("_sum_temp"); idSum2.setTipoDato("FLOAT");
+        Identificador idSum2 = new Identificador(this.nombreVarSum); idSum2.setTipoDato("FLOAT");
         OperacionAritmetica suma = new OperacionAritmetica("+", idSum2, acceso); suma.setTipoDato("FLOAT");
 
-        Identificador idSum3 = new Identificador("_sum_temp"); idSum3.setTipoDato("FLOAT");
+        Identificador idSum3 = new Identificador(this.nombreVarSum); idSum3.setTipoDato("FLOAT");
         Asignacion asigAcumular = new Asignacion(idSum3, suma);
 
         // e) Incremento: indice = indice + 1
-        Identificador idIndice4 = new Identificador("_i_temp"); idIndice4.setTipoDato("INT");
+        Identificador idIndice4 = new Identificador(this.nombreVarIndice); idIndice4.setTipoDato("INT");
         NodoHoja unoInt = new NodoHoja("1"); unoInt.setTipoDato("INT");
         OperacionAritmetica incremento = new OperacionAritmetica("+", idIndice4, unoInt); incremento.setTipoDato("INT");
 
-        Identificador idIndice5 = new Identificador("_i_temp"); idIndice5.setTipoDato("INT");
+        Identificador idIndice5 = new Identificador(this.nombreVarIndice); idIndice5.setTipoDato("INT");
         Asignacion asigIncrementar = new Asignacion(idIndice5, incremento);
 
         // f) Armar el bloque del While
@@ -84,24 +90,18 @@ public class SumaAcumulativa extends Expresion {
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
-        String varSuma = "%suma_acum_" + this.idSuma;
-        String varIndice = "%indice_acum_" + this.idSuma;
+        // 1. Crear las variables temporales únicas en memoria LLVM (alloca)
+        codigo.append(String.format("  %%%s = alloca double\n", this.nombreVarSum));
+        codigo.append(String.format("  %%%s = alloca i32\n", this.nombreVarIndice));
 
-        String labelLoop = "loop_acum_" + this.idSuma;
-        String labelEnd = "end_acum_" + this.idSuma;
-
-        // 1. Crear las variables temporales en memoria LLVM (alloca)
-        codigo.append("  %_sum_temp = alloca double\n");
-        codigo.append("  %_i_temp = alloca i32\n");
-
-        // 2. Generar el código de los hijos sintéticos (Se compilan solos!)
+        // 2. Generar el código de los hijos sintéticos
         codigo.append(asigSuma.generarCodigo());
         codigo.append(asigIndice.generarCodigo());
         codigo.append(bucleWhile.generarCodigo());
 
-        // 3. El resultado final es el valor que quedó en _sum_temp
+        // 3. El resultado final es el valor que quedó en la variable única _sum_temp_X
         this.setIrRef(llvm.CodeGeneratorHelper.getNewPointer());
-        codigo.append(String.format("  %s = load double, double* %%_sum_temp\n", this.getIrRef()));
+        codigo.append(String.format("  %s = load double, double* %%%s\n", this.getIrRef(), this.nombreVarSum));
 
         return codigo.toString();
     }

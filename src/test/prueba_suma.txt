@@ -9,7 +9,7 @@ PROGRAM
 
     % Prueba especifica de la funcion externa
     resultado = suma_cumulativa(cantidad, valores)
-    resultado2 = suma_acumulativa(cantidad, valores_2)
+    resultado_2 = suma_cumulativa(cantidad, valores_2)
 
     PRINT("Resultado de la suma:", resultado)
-    PRINT("Resultado de la suma 2:", resultado2)
+    PRINT("Resultado de la suma 2:", resultado_2)
