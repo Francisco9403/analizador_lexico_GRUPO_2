@@ -33,31 +33,34 @@ public class Programa extends Nodo {
     public String generarCodigo() {
         StringBuilder resultado = new StringBuilder();
 
-        // --- CABECERAS Y DECLARACIONES GLOBALES ---
+        // --- PASO 1: GENERAR EL CUERPO (Para registrar los strings globales) ---
+        StringBuilder cuerpoMain = new StringBuilder();
+        for(Nodo decl : this.getDeclaraciones()) {
+            cuerpoMain.append(decl.generarCodigo());
+        }
+        for(Nodo sent : this.getSentencias()) {
+            cuerpoMain.append(sent.generarCodigo());
+        }
+
+        // --- PASO 2: CABECERAS Y DECLARACIONES GLOBALES ---
         resultado.append("; Compilador UNNOBA 2026\n");
         resultado.append("target datalayout = \"e-m:w-p270:32:32-p271:32:32-p272:64:64-i64:64-f80:128-n8:16:32:64-S128\"\n");
         resultado.append("target triple = \"x86_64-pc-windows-msvc\"\n\n");
 
         resultado.append("declare i32 @printf(i8*, ...)\n");
-        resultado.append("declare i32 @scanf(i8*, ...)\n");
+        resultado.append("declare i32 @scanf(i8*, ...)\n\n");
 
-        resultado.append("declare double @suma_cumulativa(i32, ptr)\n\n");
         resultado.append("@.str.int = private constant [4 x i8] c\"%d\\0A\\00\"\n");
-        resultado.append("@.str.float = private constant [4 x i8] c\"%f\\0A\\00\"\n\n");
+        resultado.append("@.str.float = private constant [4 x i8] c\"%f\\0A\\00\"\n");
 
-        // --- FUNCIÓN MAIN ---
+        resultado.append(CodeGeneratorHelper.getGlobalStringsDef()).append("\n");
+
+        // --- PASO 3: FUNCIÓN MAIN Y ENSAMBLAJE FINAL ---
         resultado.append("define i32 @main() {\n");
         resultado.append("entry:\n");
 
-        CodeGeneratorHelper.reset();
-
-        for(Nodo decl : this.getDeclaraciones()) {
-            resultado.append(decl.generarCodigo());
-        }
-
-        for(Nodo sent : this.getSentencias()) {
-            resultado.append(sent.generarCodigo());
-        }
+        // Pegamos to-do lo que generamos al principio
+        resultado.append(cuerpoMain.toString());
 
         resultado.append("  ret i32 0\n");
         resultado.append("}\n");

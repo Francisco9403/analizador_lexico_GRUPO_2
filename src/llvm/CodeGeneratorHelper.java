@@ -74,6 +74,8 @@ public class CodeGeneratorHelper {
         labelID = 0;
         loopStartLabels.clear();
         loopEndLabels.clear();
+        globalStrings.clear();
+        stringCount = 0;
     }
 
     public static String mapearTipoLLVM(String tipoDato) {

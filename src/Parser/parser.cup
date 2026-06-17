@@ -190,8 +190,8 @@ impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
               :}
             | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
-                // s.getEtiqueta() devuelve el string interno
-                RESULT = new Impresion(s.getEtiqueta(), e);
+                String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
+                RESULT = new Impresion(textoLimpio, e);
             :};
 
 bloque ::= V_INDENT lista_sentencias:ls V_DEDENT {:

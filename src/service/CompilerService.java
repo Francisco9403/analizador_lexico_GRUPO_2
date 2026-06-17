@@ -27,6 +27,7 @@ public class CompilerService {
         try {
             // Antes de parsear, reseteamos la tabla para que no arrastre datos viejos.
             Parser.tablaSimbolos.clear();
+            llvm.CodeGeneratorHelper.reset();
             List<Token> tokens = lex(sourceCode);
 
             out.append("=== ANALISIS LEXICO ===\n");
@@ -58,7 +59,8 @@ public class CompilerService {
                 // --- GENERAR PNG AUTOMÁTICAMENTE ---
                 try {
                     // Ejecutamos Graphviz desde la consola del sistema operativo
-                    Process p = Runtime.getRuntime().exec("\"C:\\Program Files\\Graphviz\\bin\\dot.exe\" -Tpng arbol_ast.dot -o arbol_ast.png");
+                    ProcessBuilder pbDot = new ProcessBuilder("dot", "-Tpng", "arbol_ast.dot", "-o", "arbol_ast.png");
+                    Process p = pbDot.start();
                     p.waitFor(); // Esperamos a que termine de dibujar
                     out.append("[OK] Imagen generada con éxito en arbol_ast.png\n");
                 } catch (Exception ex) {
@@ -68,6 +70,12 @@ public class CompilerService {
                 String llvmCode = raiz.generarCodigo();
                 java.nio.file.Files.writeString(java.nio.file.Path.of("programa.ll"), llvmCode);
                 out.append("[OK] Código LLVM IR generado en programa.ll\n");
+                String rutaExe = generarEjecutable("programa.ll");
+                if (rutaExe != null) {
+                    out.append("[OK] ¡Ejecutable generado exitosamente en " + rutaExe + "!\n");
+                } else {
+                    out.append("[ERROR] Falló la generación del ejecutable con Clang.\n");
+                }
 
             }
 
@@ -118,11 +126,7 @@ public class CompilerService {
         String exePath = llFilePath.substring(0, llFilePath.lastIndexOf('.')) + ".exe";
 
         try {
-            // NOTA: Si usás funciones externas como 'suma_cumulativa',
-            // asegurate de que el archivo C (ej: "runtime.c") esté en la misma carpeta raíz
-            // Si no usás dependencias externas, remové "runtime.c" del comando.
-            ProcessBuilder pbClang = new ProcessBuilder("clang", "programa.ll", "runtime.c", "-o", "programa.exe");
-            pbClang.redirectErrorStream(true);
+            ProcessBuilder pbClang = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
             Process proceso = pbClang.start();
 
             // Leemos si Clang tira algún error de sintaxis o linkeo

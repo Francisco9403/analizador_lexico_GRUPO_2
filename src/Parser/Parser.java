@@ -899,8 +899,8 @@ class CUP$Parser$actions {
 		Expresion e = (Expresion)((java_cup.runtime.Symbol) CUP$Parser$stack.elementAt(CUP$Parser$top-1)).value;
 		
                 parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
-                // s.getEtiqueta() devuelve el string interno
-                RESULT = new Impresion(s.getEtiqueta(), e);
+                String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
+                RESULT = new Impresion(textoLimpio, e);
             
               CUP$Parser$result = parser.getSymbolFactory().newSymbol("impresion",15, ((java_cup.runtime.Symbol)CUP$Parser$stack.elementAt(CUP$Parser$top-5)), ((java_cup.runtime.Symbol)CUP$Parser$stack.peek()), RESULT);
             }
