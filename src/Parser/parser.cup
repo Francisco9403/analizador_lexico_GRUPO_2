@@ -85,7 +85,6 @@ nonterminal ArrayList<Nodo> elif_part, else_part, alt_while_part;
 nonterminal Nodo sentencia, sentencia_control;
 nonterminal Impresion impresion;
 nonterminal If sentencia_if;
-nonterminal ArrayList<Nodo> tail_if;
 nonterminal While sentencia_while;
 nonterminal Expresion expresion, expresionOr, expresionAnd, expresionNot, expresionSumRes, expresionMultDiv, expresionMenosU;
 nonterminal SumaAcumulativa sum_acum;

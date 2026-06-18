@@ -150,8 +150,10 @@ public class CompilerFrame extends JFrame {
     }
 
     private void loadFile() {
-        JFileChooser chooser = new JFileChooser();
-        chooser.setDialogTitle("Seleccionar codigo fuente");
+        String rutaRaiz = System.getProperty("user.dir");
+
+        JFileChooser chooser = new JFileChooser(rutaRaiz);
+        chooser.setDialogTitle("Seleccionar código fuente");
         chooser.setFileFilter(new FileNameExtensionFilter("Archivos de texto", "txt", "src", "code"));
 
         int option = chooser.showOpenDialog(this);
