@@ -1,5 +1,7 @@
 package ast;
 
+import llvm.CodeGeneratorHelper;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,18 +92,18 @@ public class SumaAcumulativa extends Expresion {
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
-        // 1. Crear las variables temporales únicas en memoria LLVM (alloca)
-        codigo.append(String.format("  %%%s = alloca double\n", this.nombreVarSum));
-        codigo.append(String.format("  %%%s = alloca i32\n", this.nombreVarIndice));
+        // Reemplazar los nombres fijos por nombres dinámicos únicos
+        String varSum = "%_sum_temp_" + this.idSuma;
+        String varIdx = "%_i_temp_" + this.idSuma;
 
-        // 2. Generar el código de los hijos sintéticos
+        codigo.append(String.format("  %s = alloca double\n", varSum));
+        codigo.append(String.format("  %s = alloca i32\n", varIdx));
         codigo.append(asigSuma.generarCodigo());
         codigo.append(asigIndice.generarCodigo());
         codigo.append(bucleWhile.generarCodigo());
 
-        // 3. El resultado final es el valor que quedó en la variable única _sum_temp_X
-        this.setIrRef(llvm.CodeGeneratorHelper.getNewPointer());
-        codigo.append(String.format("  %s = load double, double* %%%s\n", this.getIrRef(), this.nombreVarSum));
+        this.setIrRef(CodeGeneratorHelper.getNewPointer());
+        codigo.append(String.format("  %s = load double, double* %s\n", this.getIrRef(), varSum));
 
         return codigo.toString();
     }
