@@ -92,6 +92,9 @@ public class SumaAcumulativa extends Expresion {
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
+        // (Si es una variable normal, esto se ignora. Si es un literal [10, 20], lo crea en LLVM).
+        codigo.append(arreglo.generarCodigo());
+
         // Reemplazar los nombres fijos por nombres dinámicos únicos
         String varSum = "%_sum_temp_" + this.idSuma;
         String varIdx = "%_i_temp_" + this.idSuma;

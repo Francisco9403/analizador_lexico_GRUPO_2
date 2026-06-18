@@ -2,9 +2,10 @@ integer: contador_items, capacidad_maxima, items_rechazados, prioridad, x
 float: peso_total, peso_limite, promedio_peso, volumen_paquete, peso_float
 boolean: sistema_activo, error_sensor, es_urgente
 float_array[10]: registros_pesado
+float_array[3]: arreglo_suma
 
 PROGRAM
-    % 1. Inicialización y Entrada (Probamos READs y Constantes)
+    % 1. Inicialización (Probamos Constantes)
     contador_items = 0
     capacidad_maxima = 10
     peso_total = 0.0
@@ -14,7 +15,7 @@ PROGRAM
     x = 2
 
     % 1.1 Prueba de arreglos con indice entero y expresionOr como indice
-    registros_pesado = [1.0,2.0,0.]
+    registros_pesado = [1.0, 2.0, 0.0]
     peso_total = registros_pesado[1]
     peso_total = registros_pesado[0 + x]
     peso_total = registros_pesado[(0 + x)]
@@ -85,8 +86,9 @@ PROGRAM
         PRINT("Estado: Carga Ligera")
 
     % 4. TEMA ESPECIAL GRUPO 2: Suma Acumulativa
-    % Probamos la función con una lista y un multiplicador
-    promedio_peso = suma_cumulativa(5, [10.0, 20.5, 30.0])
+    % Asignamos los valores a una variable en memoria y luego la pasamos
+    arreglo_suma = [10.0, 20.5, 30.0]
+    promedio_peso = suma_cumulativa(3, arreglo_suma)
 
     PRINT("Resultado Suma Acumulativa Grupo 2:", promedio_peso)
 
