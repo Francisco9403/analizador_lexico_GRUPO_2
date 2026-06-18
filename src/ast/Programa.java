@@ -50,6 +50,8 @@ public class Programa extends Nodo {
         resultado.append("declare i32 @printf(i8*, ...)\n");
         resultado.append("declare i32 @scanf(i8*, ...)\n\n");
 
+        resultado.append("declare void @exit(i32)\n\n");
+
         resultado.append("@.str.int = private constant [4 x i8] c\"%d\\0A\\00\"\n");
         resultado.append("@.str.float = private constant [4 x i8] c\"%f\\0A\\00\"\n");
 
