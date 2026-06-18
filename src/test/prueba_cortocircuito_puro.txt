@@ -1,0 +1,26 @@
+float_array[3]: trampa_mortal
+
+PROGRAM
+    trampa_mortal = [1.0, 2.0, 3.0]
+
+    PRINT("=== PRUEBA DE CORTOCIRCUITO ===")
+    PRINT("Si el cortocircuito falla, el programa abortara de golpe.")
+
+    % --- TEST 1: OR ---
+    % Lado izquierdo es VERDADERO (10 == 10).
+    % Por lo tanto, el lado derecho (trampa_mortal[10] > 0.0) NO DEBERIA EVALUARSE.
+    IF (10 == 10 || trampa_mortal[10] > 0.0)
+        PRINT("-> EXITO OR: Salteo la trampa mortal y entro al THEN!")
+    ELSE
+        PRINT("-> FALLO OR")
+
+
+    % --- TEST 2: AND ---
+    % Lado izquierdo es FALSO (5 == 99).
+    % Por lo tanto, el lado derecho (trampa_mortal[10] > 0.0) NO DEBERIA EVALUARSE.
+    IF (5 == 99 && trampa_mortal[10] > 0.0)
+        PRINT("-> FALLO AND")
+    ELSE
+        PRINT("-> EXITO AND: Salteo la trampa mortal y cayo en el ELSE!")
+
+    PRINT("=== FIN DE LA PRUEBA ===")

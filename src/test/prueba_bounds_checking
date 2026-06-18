@@ -1,0 +1,21 @@
+integer: indice_bueno, indice_malo
+float: resultado_ok, resultado_error
+float_array[3]: puntajes
+
+PROGRAM
+    puntajes = [10.5, 20.0, 5.5]
+
+    indice_bueno = 1
+    indice_malo = 5
+
+    % Prueba 1: Acceso válido (debería leer el 20.0 sin problemas)
+    resultado_ok = puntajes[indice_bueno]
+    PRINT("Lectura permitida OK: ", resultado_ok)
+
+    % Prueba 2: Acceso INVÁLIDO (Acá tiene que actuar la protección)
+    PRINT("Atencion: Intentando leer la posicion prohibida 5...")
+    resultado_error = puntajes[indice_malo]
+
+    % --- ZONA MUERTA ---
+    % el programa tiene que abortar ANTES de llegar acá.
+    PRINT("ERROR GRAVE: Si ves este mensaje, el Bounds Checking no funciono. Basura leida: ", resultado_error)

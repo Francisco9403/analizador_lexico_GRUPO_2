@@ -26,8 +26,9 @@ public class OperacionLogica extends OperacionBinaria {
         if (operador.equals("&&")) {
             String lblEvalDer = CodeGeneratorHelper.getNewLabel();
             String lblFin = CodeGeneratorHelper.getNewLabel();
+
+            // Pedimos el puntero para el alloca al principio (porque se escribe ahora mismo)
             String ptrRes = CodeGeneratorHelper.getNewPointer();
-            String regFinal = CodeGeneratorHelper.getNewPointer();
 
             codigo.append(String.format("  %s = alloca i1\n", ptrRes));
             codigo.append(String.format("  store i1 false, i1* %s\n", ptrRes));
@@ -43,6 +44,10 @@ public class OperacionLogica extends OperacionBinaria {
             codigo.append(String.format("  br label %%%s\n", lblFin));
 
             codigo.append("\n").append(lblFin).append(":\n");
+
+            // --- ACÁ ESTÁ LA MAGIA ---
+            // Pedimos el turno justo en el momento en que lo vamos a inyectar al String
+            String regFinal = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = load i1, i1* %s\n", regFinal, ptrRes));
 
             this.setIrRef(regFinal);
@@ -53,8 +58,9 @@ public class OperacionLogica extends OperacionBinaria {
         if (operador.equals("||")) {
             String lblEvalDer = CodeGeneratorHelper.getNewLabel();
             String lblFin = CodeGeneratorHelper.getNewLabel();
+
+            // Pedimos el puntero para el alloca al principio
             String ptrRes = CodeGeneratorHelper.getNewPointer();
-            String regFinal = CodeGeneratorHelper.getNewPointer();
 
             codigo.append(String.format("  %s = alloca i1\n", ptrRes));
             codigo.append(String.format("  store i1 true, i1* %s\n", ptrRes));
@@ -70,6 +76,9 @@ public class OperacionLogica extends OperacionBinaria {
             codigo.append(String.format("  br label %%%s\n", lblFin));
 
             codigo.append("\n").append(lblFin).append(":\n");
+
+            // Pedimos el turno justo en el momento en que lo vamos a inyectar al String
+            String regFinal = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = load i1, i1* %s\n", regFinal, ptrRes));
 
             this.setIrRef(regFinal);

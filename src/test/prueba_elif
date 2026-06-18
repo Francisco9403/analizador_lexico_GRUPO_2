@@ -1,0 +1,16 @@
+integer: nota
+
+PROGRAM
+    % Cambiá este valor para probar los distintos caminos (ej: 10, 8, 5, 2)
+    nota = 8
+
+    IF (nota >= 9)
+        PRINT("Sobresaliente")
+    ELIF (nota >= 7)
+        PRINT("Aprobado")
+    ELIF (nota >= 4)
+        PRINT("A final")
+    ELSE
+        PRINT("Desaprobado")
+
+    PRINT("Fin de la evaluacion")

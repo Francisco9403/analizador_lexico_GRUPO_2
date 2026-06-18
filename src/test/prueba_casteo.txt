@@ -1,0 +1,15 @@
+integer: edad
+float: peso, resultado_suma, resultado_asig
+
+PROGRAM
+    edad = 10
+    peso = 5.5
+
+    % Prueba 1: Sumar un INT con un FLOAT
+    resultado_suma = edad + peso
+
+    % Prueba 2: Asignar un literal INT directamente a una variable FLOAT
+    resultado_asig = 42
+
+    PRINT("Resultado suma mixta:", resultado_suma)
+    PRINT("Resultado asignacion:", resultado_asig)
