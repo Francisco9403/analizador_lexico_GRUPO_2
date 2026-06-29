@@ -12,6 +12,9 @@ public class Read extends Expresion {
 
     @Override
     public String getEtiqueta() {
+        if (getTipoDato() != null && !getTipoDato().equals("UNKNOWN")) {
+            return "READ: " + tipoRead + " (" + getTipoDato() + ")";
+        }
         return "READ_" + tipoRead;
     }
 

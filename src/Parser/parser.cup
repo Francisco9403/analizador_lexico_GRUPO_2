@@ -211,12 +211,12 @@ impresion ::= PRINT PAR_A expresionOr:e PAR_C {:
               :}
             | PRINT PAR_A cte_string:s COMA expresionOr:e PAR_C {:
                 parser.printLog("Regla 2.4.1 impresion ::= PRINT PAR_A CTE_STR COMA expresionOr PAR_C");
-                String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
+                String textoLimpio = ((ast.Constante)s).getValor().toString();
                 RESULT = new Impresion(textoLimpio, e);
             :}
             | PRINT PAR_A cte_string:s PAR_C {:
                 parser.printLog("Regla 2.4.2 impresion ::= PRINT PAR_A CTE_STR PAR_C");
-                String textoLimpio = ((ast.NodoHoja)s).getValor().toString();
+                String textoLimpio = ((ast.Constante)s).getValor().toString();
                 RESULT = new Impresion(textoLimpio);
             :};
 
@@ -236,11 +236,11 @@ lista_sentencias ::= lista_sentencias:ls sentencia:s{:
 
 sentencia_control ::= BREAK {:
                     parser.printLog("Regla 2.7.0 sentencia_control ::= BREAK");
-                    RESULT = new NodoControl("BREAK");
+                    RESULT = new Control("BREAK");
                     :}
                     | CONTINUE {:
                     parser.printLog("Regla 2.7.1 sentencia_control ::= CONTINUE");
-                    RESULT = new NodoControl("CONTINUE");
+                    RESULT = new Control("CONTINUE");
                     :};
 
 sentencia_if ::= IF expresionOr:c bloque:b elif_part:el else_part:es {:
@@ -502,17 +502,17 @@ expresion ::= PAR_A expresionOr:e PAR_C {:
 /* --- Dentro de la sección de valorLiteral --- */
 valorLiteral ::= CTE_INT:n {:
                 parser.printLog("Regla 3.8.0 valorLiteral ::= CTE_INT");
-                NodoHoja nodo = new NodoHoja(n);
+                Constante nodo = new Constante(n);
                 nodo.setTipoDato("INT");
                 RESULT = nodo;
             :}| CTE_FLOAT:f {:
                 parser.printLog("Regla 3.8.1 valorLiteral ::= CTE_FLOAT");
-                NodoHoja nodo = new NodoHoja(f);
+                Constante nodo = new Constante(f);
                 nodo.setTipoDato("FLOAT");
                 RESULT = nodo;
             :}| CONST_BOOL:b {:
               parser.printLog("Regla 3.8.2 valorLiteral ::= CONST_BOOL");
-              NodoHoja nodo = new NodoHoja(b);
+              Constante nodo = new Constante(b);
               nodo.setTipoDato("BOOL");
               RESULT = nodo;
               :}
@@ -538,7 +538,7 @@ arreglo_literal ::= CORCH_A lista_expresiones:le CORCH_C {:
 cte_string ::= CTE_STR:s {:
              parser.printLog("Regla 3.9.0 cte_string ::= CTE_STR");
              Parser.tablaSimbolos.addConstant("_" + s, "CTE_STR", s, String.valueOf(s.length()));
-             NodoHoja nodo = new NodoHoja("\"" + s + "\"");
+             Constante nodo = new Constante("\"" + s + "\"");
              nodo.setTipoDato("STRING");
              RESULT = nodo;
             :};

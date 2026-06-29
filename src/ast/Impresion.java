@@ -50,7 +50,6 @@ public class Impresion extends Nodo {
             String globalRef = globalData[0];
             String size = globalData[1];
 
-            // Pedimos el ID justo en el momento en que lo vamos a usar
             String refPrint = CodeGeneratorHelper.getNewPointer();
 
             codigo.append(String.format("  %s = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([%s x i8], [%s x i8]* %s, i32 0, i32 0))\n",
@@ -60,27 +59,31 @@ public class Impresion extends Nodo {
         }
 
         // --- CASO B: HAY UNA VARIABLE (CON O SIN TEXTO) ---
-        // 1. PRIMERO generamos el código de la expresión (que consumirá sus propios IDs numéricos)
         codigo.append(expresion.generarCodigo());
         String regValor = expresion.getIrRef();
         String tipoDato = expresion.getTipoDato();
 
-        // 2. DESPUÉS pedimos el ID para el Print (así nos aseguramos de que sea el número mayor)
+        if ("BOOL".equals(tipoDato)) {
+            String regExt = CodeGeneratorHelper.getNewPointer();
+            codigo.append(String.format("  %s = zext i1 %s to i32\n", regExt, regValor));
+            regValor = regExt;
+        }
+
         String refPrint = CodeGeneratorHelper.getNewPointer();
 
         if (stringOpcional != null) {
             String formatStr = stringOpcional.replace("\"", "");
-            formatStr += "INT".equals(tipoDato) ? " %d" : " %f";
+            formatStr += ("INT".equals(tipoDato) || "BOOL".equals(tipoDato)) ? " %d" : " %f";
 
             String[] globalData = CodeGeneratorHelper.addGlobalString(formatStr).split("\\|\\|");
             String globalRef = globalData[0];
             String size = globalData[1];
-            String tipoC = "INT".equals(tipoDato) ? "i32" : "double";
+            String tipoC = ("INT".equals(tipoDato) || "BOOL".equals(tipoDato)) ? "i32" : "double";
 
             codigo.append(String.format("  %s = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([%s x i8], [%s x i8]* %s, i32 0, i32 0), %s %s)\n",
                     refPrint, size, size, globalRef, tipoC, regValor));
         } else {
-            if ("INT".equals(tipoDato)) {
+            if ("INT".equals(tipoDato) || "BOOL".equals(tipoDato)) {
                 codigo.append(String.format("  %s = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.int, i32 0, i32 0), i32 %s)\n", refPrint, regValor));
             } else if ("FLOAT".equals(tipoDato)) {
                 codigo.append(String.format("  %s = call i32 (i8*, ...) @printf(i8* getelementptr inbounds ([4 x i8], [4 x i8]* @.str.float, i32 0, i32 0), double %s)\n", refPrint, regValor));

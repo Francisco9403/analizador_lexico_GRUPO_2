@@ -11,6 +11,9 @@ public class OperacionUnaria extends Expresion {
     public OperacionUnaria(String operador, Expresion expresion) {
         this.operador = operador;
         this.expresion = expresion;
+        if (operador.equals("!") || operador.equals("not")){
+            this.setTipoDato("BOOL");
+        }
     }
 
     @Override

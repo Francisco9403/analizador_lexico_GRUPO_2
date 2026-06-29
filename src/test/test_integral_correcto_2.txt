@@ -1,0 +1,566 @@
+integer: i, j, resultado, valor_leido_int
+FLOAT: f1, f2, valor_leido_float
+BOOLEAN: b1, b2, valor_leido_bool
+FLOAT_ARRAY[5]: a1, a2, a3
+
+PROGRAM
+
+	PRINT("========================================")
+	PRINT("TEST INTEGRAL DEL COMPILADOR")
+	PRINT("========================================")
+
+	{* -----------------------------------------
+	   INT + FLOAT
+	   Salida esperada:
+	   11.5
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(11.5)
+
+	i = 10
+	f1 = 1.5
+
+	f2 = i + f1
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   INT - FLOAT
+	   Salida esperada:
+	   8.5
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(8.5)
+
+	f2 = i - f1
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   INT * FLOAT
+	   Salida esperada:
+	   15.0
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(15.0)
+
+	f2 = i * f1
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   INT / FLOAT
+	   Salida esperada:
+	   4.0
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(4.0)
+
+	f2 = 10 / 2.5
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   PRECEDENCIA ARITMETICA
+	   Salida esperada:
+	   19.0
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(19.0)
+
+	f2 = 10 + 5 * 2 - 5.0 / 5.0
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   EXPRESION ARITMETICA COMPLEJA
+	   Salida esperada:
+	   29.0
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(29.0)
+
+	f2 = (10 + 5) * 2 - 1
+	PRINT(f2)
+
+	{* -----------------------------------------
+	   ARRAYS INICIALES
+	   ----------------------------------------- *}
+
+	a1 = [1.0,2.0,3.0,4.0,5.0]
+	a2 = [10.0,20.0,30.0,40.0,50.0]
+
+	{* -----------------------------------------
+	   ARRAY + INT
+	   Salida esperada:
+	   11
+	   12
+	   13
+	   14
+	   15
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(11)
+	PRINT(12)
+	PRINT(13)
+	PRINT(14)
+	PRINT(15)
+
+	a3 = a1 + 10
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   ARRAY * FLOAT
+	   Salida esperada:
+	   2.5
+	   5.0
+	   7.5
+	   10.0
+	   12.5
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(2.5)
+	PRINT(5.0)
+	PRINT(7.5)
+	PRINT(10.0)
+	PRINT(12.5)
+
+	a3 = a1 * 2.5
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   ARRAY + ARRAY
+	   Salida esperada:
+	   11
+	   22
+	   33
+	   44
+	   55
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(11)
+	PRINT(22)
+	PRINT(33)
+	PRINT(44)
+	PRINT(55)
+
+	a3 = a1 + a2
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   ARRAY - ARRAY
+	   Salida esperada:
+	   9
+	   18
+	   27
+	   36
+	   45
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(9)
+	PRINT(18)
+	PRINT(27)
+	PRINT(36)
+	PRINT(45)
+
+	a3 = a2 - a1
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   ARRAY * ARRAY
+	   Salida esperada:
+	   10
+	   40
+	   90
+	   160
+	   250
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(10)
+	PRINT(40)
+	PRINT(90)
+	PRINT(160)
+	PRINT(250)
+
+	a3 = a1 * a2
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   ARRAY / ARRAY
+	   Salida esperada:
+	   10
+	   10
+	   10
+	   10
+	   10
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(10)
+	PRINT(10)
+	PRINT(10)
+	PRINT(10)
+	PRINT(10)
+
+	a3 = a2 / a1
+
+	i = 0
+	WHILE i < 5
+		PRINT(a3[i])
+		i = i + 1
+
+	{* -----------------------------------------
+	   COMPARACIONES ESCALARES
+	   Salida esperada:
+	   true
+	   false
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+	PRINT(false)
+	PRINT(true)
+
+	b1 = 10 > 5
+	PRINT(b1)
+
+	b1 = 10 < 5
+	PRINT(b1)
+
+	b1 = 10 == 10.0
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   PRECEDENCIA LOGICA
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	b1 = true || false && false
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   NEGACION
+	   Salida esperada:
+	   false
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(false)
+
+	b1 = !(10 > 5) || false
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   EXPRESION ARITMETICO-LOGICA
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	b1 = ((10 + 5) * 2 > 20) && (5 < 10) || false
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   COMPARACION ARRAY == ARRAY
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	a1 = [1.0,2.0,3.0,4.0,5.0]
+	a2 = [1.0,2.0,3.0,4.0,5.0]
+
+	b1 = a1 == a2
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   COMPARACION ARRAY != ARRAY
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	a3 = [5.0,4.0,3.0,2.0,1.0]
+
+	b1 = a1 != a3
+	PRINT(b1)
+
+	{* -----------------------------------------
+	   IF / ELIF / ELIF / ELSE
+	   Salida esperada:
+	   Segundo ELIF
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT("Segundo ELIF")
+
+	i = 20
+
+	IF i < 10
+		PRINT("ERROR")
+	ELIF i < 20
+		PRINT("ERROR")
+	ELIF i == 20
+		PRINT("Segundo ELIF")
+	ELSE
+		PRINT("ERROR")
+
+	{* -----------------------------------------
+	   CONTINUE
+	   Salida esperada:
+	   0
+	   2
+	   4
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(0)
+	PRINT(2)
+	PRINT(4)
+
+	i = 0
+
+	WHILE i < 5
+
+		IF i == 1
+			i = i + 1
+			CONTINUE
+
+		IF i == 3
+			i = i + 1
+			CONTINUE
+
+		PRINT(i)
+
+		i = i + 1
+
+	{* -----------------------------------------
+	   BREAK
+	   Salida esperada:
+	   0
+	   1
+	   2
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(0)
+	PRINT(1)
+	PRINT(2)
+
+	i = 0
+
+	WHILE i < 10
+
+		IF i == 3
+			BREAK
+
+		PRINT(i)
+
+		i = i + 1
+
+	{* -----------------------------------------
+	   WHILE + ALT_WHILE
+	   Salida esperada:
+	   0
+	   1
+	   2
+	   ALT_WHILE
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(0)
+	PRINT(1)
+	PRINT(2)
+	PRINT("ALT_WHILE")
+
+	i = 0
+	b1 = true
+
+	WHILE i < 3
+		PRINT(i)
+		i = i + 1
+	ALT_WHILE b1
+		PRINT("ALT_WHILE")
+		b1 = false
+
+	{* -----------------------------------------
+	   suma_cumulativa
+	   Salida esperada:
+	   8.4
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(8.4)
+
+	resultado = suma_cumulativa(3, [1.0,2.0,5.4,8.0,10.0])
+	PRINT(resultado)
+
+	{* -----------------------------------------
+	   múltiples suma_cumulativa
+	   Salida esperada:
+	   34.8
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(34.8)
+
+	resultado = suma_cumulativa(3, [1.0,2.0,5.4,8.0,10.0]) + suma_cumulativa(5, [1.0,2.0,5.4,8.0,10.0])
+	PRINT(resultado)
+
+	{* -----------------------------------------
+	   ACCESO A ARREGLOS
+	   Salida esperada:
+	   1
+	   5
+	   ----------------------------------------- *}
+
+	PRINT("Salida esperada:")
+	PRINT(1)
+	PRINT(5)
+
+	PRINT(a1[0])
+	PRINT(a1[4])
+
+	{* -----------------------------------------
+	   READ_INT
+	   Ingresar: 123
+
+	   Salida esperada:
+	   123
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el entero 123")
+
+	PRINT("Salida esperada:")
+	PRINT(123)
+
+	valor_leido_int = READ_INT()
+
+	PRINT(valor_leido_int)
+
+	{* -----------------------------------------
+	   READ_FLOAT
+	   Ingresar: 3.5
+
+	   Salida esperada:
+	   3.5
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el float 3.5")
+
+	PRINT("Salida esperada:")
+	PRINT(3.5)
+
+	valor_leido_float = READ_FLOAT()
+
+	PRINT(valor_leido_float)
+
+	{* -----------------------------------------
+	   READ_BOOL
+	   Ingresar: true
+
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el booleano true")
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	valor_leido_bool = READ_BOOL()
+
+	PRINT(valor_leido_bool)
+
+	{* -----------------------------------------
+	   READ_INT EN EXPRESION
+
+	   Ingresar: 5
+
+	   Salida esperada:
+	   15
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el entero 5")
+
+	PRINT("Salida esperada:")
+	PRINT(15)
+
+	i = 10 + READ_INT()
+
+	PRINT(i)
+
+	{* -----------------------------------------
+	   READ_FLOAT EN EXPRESION
+
+	   Ingresar: 2.5
+
+	   Salida esperada:
+	   5.0
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el float 2.5")
+
+	PRINT("Salida esperada:")
+	PRINT(5.0)
+
+	f1 = READ_FLOAT() * 2.0
+
+	PRINT(f1)
+
+	{* -----------------------------------------
+	   READ_BOOL EN EXPRESION
+
+	   Ingresar: false
+
+	   Salida esperada:
+	   true
+	   ----------------------------------------- *}
+
+	PRINT("Ingrese el booleano false")
+
+	PRINT("Salida esperada:")
+	PRINT(true)
+
+	b1 = true || READ_BOOL()
+
+	PRINT(b1)
+
+	PRINT("FIN DEL TEST")

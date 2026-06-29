@@ -2,10 +2,10 @@ package ast;
 
 import llvm.CodeGeneratorHelper;
 
-public class NodoControl extends Nodo {
+public class Control extends Nodo {
     private String tipoControl; // "BREAK" o "CONTINUE"
 
-    public NodoControl(String tipoControl) {
+    public Control(String tipoControl) {
         this.tipoControl = tipoControl;
     }
 

@@ -1,9 +1,9 @@
 package ast;
 
-public class NodoHoja extends Expresion {
+public class Constante extends Expresion {
     private final Object valor;
 
-    public NodoHoja(Object valor) {
+    public Constante(Object valor) {
         this.valor = valor;
     }
 
@@ -13,6 +13,9 @@ public class NodoHoja extends Expresion {
 
     @Override
     public String getEtiqueta() {
+        if (getTipoDato() != null && !getTipoDato().equals("UNKNOWN")) {
+            return "Const: " + valor + " (" + getTipoDato() + ")";
+        }
         return "Const: " + valor.toString();
     }
 

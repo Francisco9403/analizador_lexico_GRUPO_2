@@ -126,7 +126,7 @@ public class CompilerService {
         String exePath = llFilePath.substring(0, llFilePath.lastIndexOf('.')) + ".exe";
 
         try {
-            ProcessBuilder pbClang = new ProcessBuilder("clang", "programa.ll", "-o", "programa.exe");
+            ProcessBuilder pbClang = new ProcessBuilder("clang", "programa.ll", "scanf.o", "-o", "programa.exe");
             Process proceso = pbClang.start();
 
             // Leemos si Clang tira algún error de sintaxis o linkeo

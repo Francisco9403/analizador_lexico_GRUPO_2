@@ -8,6 +8,12 @@ public class OperacionComparar extends OperacionBinaria {
     public OperacionComparar(String operador, Expresion izquierda, Expresion derecha) {
         super(izquierda, derecha);
         this.operador = operador;
+
+        if (!izquierda.getTipoDato().equals(derecha.getTipoDato()) &&
+                (izquierda.getTipoDato().equals("BOOL") || derecha.getTipoDato().equals("BOOL"))) {
+            throw new RuntimeException("Error semántico: Incompatibilidad de tipos. No se puede comparar un tipo booleano con un tipo numérico o arreglo.");
+        }
+        this.setTipoDato("BOOL");
     }
 
     @Override

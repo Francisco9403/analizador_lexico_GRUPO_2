@@ -1,0 +1,274 @@
+integer: i
+FLOAT: f
+BOOLEAN: b
+FLOAT_ARRAY[5]: a1, a2
+
+PROGRAM
+
+	{* =====================================================
+	   ERRORES DE ASIGNACION Y PROMOCION DE TIPOS
+	   ===================================================== *}
+
+	{* Error esperado:
+	   FLOAT -> INT no permitido
+	*}
+	i = 1.5
+
+	{* Error esperado:
+	   Resultado FLOAT asignado a INT
+	*}
+	i = 10 + 1.5
+
+	{* Error esperado:
+	   ARRAY -> FLOAT no permitido
+	*}
+	f = a1
+
+	{* Error esperado:
+	   ARRAY -> INT no permitido
+	*}
+	i = a1
+
+	{* Error esperado:
+	   Resultado ARRAY asignado a FLOAT
+	*}
+	f = a1 + 1
+
+	{* Error esperado:
+	   Resultado ARRAY asignado a INT
+	*}
+	i = a1 + 1
+
+	{* Error esperado:
+	   BOOLEAN -> INT no permitido
+	*}
+	i = true
+
+	{* Error esperado:
+	   BOOLEAN -> FLOAT no permitido
+	*}
+	f = false
+
+	{* Error esperado:
+	   BOOLEAN -> ARRAY no permitido
+	*}
+	a1 = true
+
+	{* Error esperado:
+	   Expresion BOOLEAN asignada a INT
+	*}
+	i = 10 > 5
+
+	{* Error esperado:
+	   Expresion BOOLEAN asignada a FLOAT
+	*}
+	f = 10 > 5
+
+	{* Error esperado:
+	   Expresion BOOLEAN asignada a ARRAY
+	*}
+	a1 = 10 > 5
+
+	{* Error esperado:
+	   Expresion logica asignada a INT
+	*}
+	i = true && false
+
+	{* Error esperado:
+	   Expresion logica asignada a FLOAT
+	*}
+	f = true && false
+
+	{* Error esperado:
+	   Expresion logica asignada a ARRAY
+	*}
+	a1 = true && false
+
+	{* =====================================================
+	   OPERACIONES ARITMETICAS CON BOOLEAN
+	   ===================================================== *}
+
+	{* Error esperado:
+	   BOOLEAN en suma
+	*}
+	i = true + 1
+
+	{* Error esperado:
+	   BOOLEAN en suma
+	*}
+	i = 1 + true
+
+	{* Error esperado:
+	   BOOLEAN en resta
+	*}
+	i = 5 - false
+
+	{* Error esperado:
+	   BOOLEAN en multiplicacion
+	*}
+	f = true * 2.0
+
+	{* Error esperado:
+	   BOOLEAN en division
+	*}
+	f = 10.0 / false
+
+	{* Error esperado:
+	   ARRAY + BOOLEAN
+	*}
+	a1 = a1 + true
+
+	{* Error esperado:
+	   BOOLEAN + ARRAY
+	*}
+	a1 = true + a1
+
+	{* =====================================================
+	   OPERADORES LOGICOS CON TIPOS INVALIDOS
+	   ===================================================== *}
+
+	{* Error esperado:
+	   ! aplicado a INT
+	*}
+	b = !i
+
+	{* Error esperado:
+	   ! aplicado a FLOAT
+	*}
+	b = !f
+
+	{* Error esperado:
+	   ! aplicado a ARRAY
+	*}
+	b = !a1
+
+	{* Error esperado:
+	   && entre INT y BOOLEAN
+	*}
+	b = i && true
+
+	{* Error esperado:
+	   && entre FLOAT y BOOLEAN
+	*}
+	b = f && true
+
+	{* Error esperado:
+	   && entre ARRAY y BOOLEAN
+	*}
+	b = a1 && true
+
+	{* Error esperado:
+	   || entre INT y BOOLEAN
+	*}
+	b = i || false
+
+	{* Error esperado:
+	   || entre FLOAT y BOOLEAN
+	*}
+	b = f || false
+
+	{* Error esperado:
+	   || entre ARRAY y BOOLEAN
+	*}
+	b = a1 || false
+
+	{* =====================================================
+	   COMPARACIONES INVALIDAS CON BOOLEAN
+	   ===================================================== *}
+
+	{* Error esperado:
+	   Comparacion aritmetica con BOOLEAN
+	*}
+	b = true > 5
+
+	{* Error esperado:
+	   Comparacion aritmetica con BOOLEAN
+	*}
+	b = 5 < false
+
+	{* Error esperado:
+	   Comparacion entre ARRAY y BOOLEAN
+	*}
+	b = a1 == true
+
+	{* =====================================================
+	   READ_* UTILIZADOS INCORRECTAMENTE
+	   ===================================================== *}
+
+	{* Error esperado:
+	   READ_BOOL en expresion aritmetica
+	*}
+	i = READ_BOOL() + 1
+
+	{* Error esperado:
+	   READ_FLOAT en expresion logica
+	*}
+	b = READ_FLOAT() && true
+
+	{* Error esperado:
+	   READ_INT en expresion logica
+	*}
+	b = READ_INT() || false
+
+	{* Error esperado:
+	   FLOAT -> BOOLEAN
+	*}
+	b = READ_FLOAT()
+
+	{* Error esperado:
+	   INT -> BOOLEAN
+	*}
+	b = READ_INT()
+
+	{* Error esperado:
+	   BOOLEAN -> INT
+	*}
+	i = READ_BOOL()
+
+	{* =====================================================
+	   BREAK Y CONTINUE FUERA DE WHILE
+	   ===================================================== *}
+
+	{* Error esperado:
+	   BREAK fuera de WHILE
+	*}
+	BREAK
+
+	{* Error esperado:
+	   CONTINUE fuera de WHILE
+	*}
+	CONTINUE
+
+	{* =====================================================
+	   INDICES FUERA DE RANGO
+	   ===================================================== *}
+
+	{* Error esperado:
+	   Indice negativo
+	*}
+	PRINT(a1[-1])
+
+	{* Error esperado:
+	   Indice igual al tamaño
+	*}
+	PRINT(a1[5])
+
+	{* Error esperado:
+	   Indice fuera de rango
+	*}
+	PRINT(a1[100])
+
+	{* Error esperado:
+	   Escritura con indice negativo
+	*}
+	a1[-1] = 10.0
+
+	{* Error esperado:
+	   Escritura con indice igual al tamaño
+	*}
+	a1[5] = 10.0
+
+	{* Error esperado:
+	   Escritura con indice fuera de rango
+	*}
+	a1[100] = 10.0

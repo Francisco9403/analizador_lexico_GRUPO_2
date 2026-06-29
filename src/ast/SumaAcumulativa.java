@@ -39,12 +39,12 @@ public class SumaAcumulativa extends Expresion {
 
         // a) sumatoria = 0.0
         Identificador idSum1 = new Identificador(this.nombreVarSum); idSum1.setTipoDato("FLOAT");
-        NodoHoja ceroFloat = new NodoHoja("0.0"); ceroFloat.setTipoDato("FLOAT");
+        Constante ceroFloat = new Constante("0.0"); ceroFloat.setTipoDato("FLOAT");
         this.asigSuma = new Asignacion(idSum1, ceroFloat);
 
         // b) indice = 0
         Identificador idIndice1 = new Identificador(this.nombreVarIndice); idIndice1.setTipoDato("INT");
-        NodoHoja ceroInt = new NodoHoja("0"); ceroInt.setTipoDato("INT");
+        Constante ceroInt = new Constante("0"); ceroInt.setTipoDato("INT");
         this.asigIndice = new Asignacion(idIndice1, ceroInt);
 
         // c) Condición del While: indice < limite
@@ -63,7 +63,7 @@ public class SumaAcumulativa extends Expresion {
 
         // e) Incremento: indice = indice + 1
         Identificador idIndice4 = new Identificador(this.nombreVarIndice); idIndice4.setTipoDato("INT");
-        NodoHoja unoInt = new NodoHoja("1"); unoInt.setTipoDato("INT");
+        Constante unoInt = new Constante("1"); unoInt.setTipoDato("INT");
         OperacionAritmetica incremento = new OperacionAritmetica("+", idIndice4, unoInt); incremento.setTipoDato("INT");
 
         Identificador idIndice5 = new Identificador(this.nombreVarIndice); idIndice5.setTipoDato("INT");
