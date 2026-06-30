@@ -1,0 +1,44 @@
+integer: limite, i
+float: resultado, valor
+float_array[3]: mis_notas
+float_array[3]: notas_actualizadas
+
+PROGRAM
+    % Inicializamos el arreglo con 3 posiciones
+    mis_notas = [7.0, 8.5, 9.0]
+
+    % =================================================================
+    % PRUEBA 1: Operacion Aritmetica Vectorizada (Arreglo + Escalar)
+    % =================================================================
+    % Esto antes tiraba error o no sumaba. Ahora debe generar un bucle LLVM interno.
+    notas_actualizadas = mis_notas + 1.5
+    PRINT("Operacion de arreglo + escalar generada correctamente.", notas_actualizadas[0])
+
+
+    % =================================================================
+    % PRUEBA 2: Suma Acumulativa (Límites Seguros)
+    % =================================================================
+    % Sumamos solo los 2 primeros elementos (7.0 + 8.5).
+    limite = 2
+    resultado = suma_cumulativa(limite, mis_notas)
+    PRINT("Suma acumulativa segura finalizada.",resultado)
+
+
+    % =================================================================
+    % PRUEBA 3: BOUNDS CHECKING EN ARREGLOS (Romper el programa) probar con echo %errorlevel% en consola
+    % =================================================================
+    {* INSTRUCCIÓN: Descomenta la línea de abajo borrando el '%' para probar
+      que el compilador aborta la ejecución en la terminal.
+      Intentamos acceder al índice 5 de un arreglo de tamaño 3.
+    *}
+    % valor = mis_notas[5]
+
+
+    % =================================================================
+    % PRUEBA 4: BOUNDS CHECKING EN SUMA ACUMULATIVA (Romper el programa) probar con echo %errorlevel% en consola
+    % =================================================================
+    {* INSTRUCCIÓN: Descomenta las líneas de abajo para probar que la
+      suma acumulativa aborta si le pedís sumar más elementos de los que existen.
+    *}
+    % limite = 10
+    % resultado = suma_cumulativa(limite, mis_notas)

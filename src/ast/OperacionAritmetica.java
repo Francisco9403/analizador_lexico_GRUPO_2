@@ -35,36 +35,31 @@ public class OperacionAritmetica extends OperacionBinaria {
         if ((tipoIzquierda != null && tipoIzquierda.startsWith("FLOAT_ARRAY")) ||
                 (tipoDerecha != null && tipoDerecha.startsWith("FLOAT_ARRAY"))) {
 
-            // Generamos el código para evaluar las expresiones de los operandos
             codigo.append(this.getIzquierda().generarCodigo());
             codigo.append(this.getDerecha().generarCodigo());
 
-            // Determinamos el tamaño inspeccionando el tipo declarado (ej: "FLOAT_ARRAY[5]")
             String tipoDeclarado = tipoIzquierda.startsWith("FLOAT_ARRAY") ? tipoIzquierda : tipoDerecha;
-            int tamaño = 5; // Valor por defecto seguro en caso de fallar el parseo
+            int tamaño = 5;
             if (tipoDeclarado.contains("[") && tipoDeclarado.contains("]")) {
                 int inicio = tipoDeclarado.indexOf('[') + 1;
                 int fin = tipoDeclarado.indexOf(']');
                 tamaño = Integer.parseInt(tipoDeclarado.substring(inicio, fin));
             }
 
-            // 1. Reservar memoria en la pila para el nuevo arreglo de resultados
             String resArrayPtr = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = alloca [%d x double]\n", resArrayPtr, tamaño));
 
-            // 2. Crear variable contadora/índice para el bucle iterativo
             String idxPtr = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = alloca i32\n", idxPtr));
             codigo.append(String.format("  store i32 0, i32* %s\n", idxPtr));
 
-            // 3. Definir etiquetas únicas de control para el bucle
             String lblCond = "arr_op_cond_" + CodeGeneratorHelper.getNewLabel();
             String lblCuerpo = "arr_op_body_" + CodeGeneratorHelper.getNewLabel();
             String lblFin = "arr_op_end_" + CodeGeneratorHelper.getNewLabel();
 
             codigo.append(String.format("  br label %%%s\n", lblCond));
 
-            // --- EVALUACIÓN DE CONDICIÓN ---
+            // EVALUACIÓN DE CONDICIÓN
             codigo.append("\n").append(lblCond).append(":\n");
             String currentIdx = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = load i32, i32* %s\n", currentIdx, idxPtr));
@@ -72,33 +67,35 @@ public class OperacionAritmetica extends OperacionBinaria {
             codigo.append(String.format("  %s = icmp slt i32 %s, %d\n", cmpReg, currentIdx, tamaño));
             codigo.append(String.format("  br i1 %s, label %%%s, label %%%s\n", cmpReg, lblCuerpo, lblFin));
 
-            // --- CUERPO DEL BUCLE ---
+            // CUERPO DEL BUCLE
             codigo.append("\n").append(lblCuerpo).append(":\n");
 
-            // Obtener el operando Izquierdo (puede ser un puntero a arreglo o un escalar double)
-            String valIzq = CodeGeneratorHelper.getNewPointer();
+            // CORRECCIÓN: Pedir registros estrictamente en orden de uso LLVM
+            String valIzq;
             if (tipoIzquierda.startsWith("FLOAT_ARRAY")) {
-                String elemPtrIzq = CodeGeneratorHelper.getNewPointer();
+                String elemPtrIzq = CodeGeneratorHelper.getNewPointer(); // Pide el %11
+                valIzq = CodeGeneratorHelper.getNewPointer();            // Pide el %12
                 codigo.append(String.format("  %s = getelementptr double, double* %s, i32 %s\n",
                         elemPtrIzq, this.getIzquierda().getIrRef(), currentIdx));
                 codigo.append(String.format("  %s = load double, double* %s\n", valIzq, elemPtrIzq));
             } else {
-                // Si es un escalar, se lee directo o se usa su referencia fija
+                valIzq = CodeGeneratorHelper.getNewPointer();
                 codigo.append(String.format("  %s = fadd double 0.0, %s\n", valIzq, this.getIzquierda().getIrRef()));
             }
 
-            // Obtener el operando Derecho (puede ser un puntero a arreglo o un escalar double)
-            String valDer = CodeGeneratorHelper.getNewPointer();
+            // CORRECCIÓN: Pedir registros estrictamente en orden de uso LLVM
+            String valDer;
             if (tipoDerecha.startsWith("FLOAT_ARRAY")) {
-                String elemPtrDer = CodeGeneratorHelper.getNewPointer();
+                String elemPtrDer = CodeGeneratorHelper.getNewPointer(); // Pide el %13
+                valDer = CodeGeneratorHelper.getNewPointer();            // Pide el %14
                 codigo.append(String.format("  %s = getelementptr double, double* %s, i32 %s\n",
                         elemPtrDer, this.getDerecha().getIrRef(), currentIdx));
                 codigo.append(String.format("  %s = load double, double* %s\n", valDer, elemPtrDer));
             } else {
+                valDer = CodeGeneratorHelper.getNewPointer();
                 codigo.append(String.format("  %s = fadd double 0.0, %s\n", valDer, this.getDerecha().getIrRef()));
             }
 
-            // Aplicar la operación aritmética escalar double correspondiente
             String opLLVM = "fadd";
             switch(operador) {
                 case "-": opLLVM = "fsub"; break;
@@ -108,22 +105,18 @@ public class OperacionAritmetica extends OperacionBinaria {
             String resOpScalar = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = %s double %s, %s\n", resOpScalar, opLLVM, valIzq, valDer));
 
-            // Almacenar el resultado escalar en la posición correspondiente del nuevo vector
             String destElemPtr = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = getelementptr [%d x double], [%d x double]* %s, i32 0, i32 %s\n",
                     destElemPtr, tamaño, tamaño, resArrayPtr, currentIdx));
             codigo.append(String.format("  store double %s, double* %s\n", resOpScalar, destElemPtr));
 
-            // Incrementar el iterador
             String nextIdx = CodeGeneratorHelper.getNewPointer();
             codigo.append(String.format("  %s = add i32 %s, 1\n", nextIdx, currentIdx));
             codigo.append(String.format("  store i32 %s, i32* %s\n", nextIdx, idxPtr));
             codigo.append(String.format("  br label %%%s\n", lblCond));
 
-            // --- FIN DEL BUCLE ---
+            // FIN DEL BUCLE
             codigo.append("\n").append(lblFin).append(":\n");
-
-            // Dejamos en irRef un puntero directo al primer elemento (double*) del nuevo arreglo procesado
             this.setIrRef(CodeGeneratorHelper.getNewPointer());
             codigo.append(String.format("  %s = getelementptr [%d x double], [%d x double]* %s, i32 0, i32 0\n",
                     this.getIrRef(), tamaño, tamaño, resArrayPtr));
@@ -132,7 +125,7 @@ public class OperacionAritmetica extends OperacionBinaria {
         }
 
         // -----------------------------------------------------------------
-        // CASO B: Operaciones Escalares Estándar (Código Original)
+        // CASO B: Operaciones Escalares Estándar
         // -----------------------------------------------------------------
         codigo.append(this.getIzquierda().generarCodigo());
         codigo.append(this.getDerecha().generarCodigo());

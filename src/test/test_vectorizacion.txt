@@ -1,0 +1,35 @@
+integer: i
+float: esc1
+float_array[3]: arr1
+float_array[3]: arr2
+float_array[3]: res
+
+PROGRAM
+    % Inicialización
+    arr1 = [7.0, 8.5, 9.0]
+    arr2 = [1.0, 2.0, 3.0]
+    esc1 = 2.0
+
+    % =================================================================
+    % PRUEBA 1: Arreglo + Arreglo
+    % =================================================================
+    % Esperado: [7+1, 8.5+2, 9+3] -> [8.0, 10.5, 12.0]
+    res = arr1 + arr2
+    PRINT("Arr1 + Arr2 index 0 (debe ser 8.0): ", res[0])
+    PRINT("Arr1 + Arr2 index 1 (debe ser 10.5): ", res[1])
+
+    % =================================================================
+    % PRUEBA 2: Arreglo + Escalar
+    % =================================================================
+    % Esperado: [7+2, 8.5+2, 9+2] -> [9.0, 10.5, 11.0]
+    res = arr1 + esc1
+    PRINT("Arr + Scalar index 0 (debe ser 9.0): ", res[0])
+    PRINT("Arr + Scalar index 1 (debe ser 10.5): ", res[1])
+
+    % =================================================================
+    % PRUEBA 3: Escalar + Arreglo
+    % =================================================================
+    % Esperado: [2+7, 2+8.5, 2+9] -> [9.0, 10.5, 11.0]
+    res = esc1 + arr1
+    PRINT("Scalar + Arr index 0 (debe ser 9.0): ", res[0])
+    PRINT("Scalar + Arr index 2 (debe ser 11.0): ", res[2])
