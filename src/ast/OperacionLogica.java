@@ -10,7 +10,7 @@ public class OperacionLogica extends OperacionBinaria {
         this.operador = operador;
 
         if (!"BOOL".equals(izquierda.getTipoDato()) || !"BOOL".equals(derecha.getTipoDato())) {
-            throw new RuntimeException("Error semántico: Los operadores lógicos ('&&', '||') solo aceptan operandos de tipo BOOL.");
+            throw new RuntimeException("Error semántico: Los operadores lógicos ('!','&&', '||') solo aceptan operandos de tipo BOOL.");
         }
         this.setTipoDato("BOOL");
     }
