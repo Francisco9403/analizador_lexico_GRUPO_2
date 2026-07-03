@@ -9,6 +9,7 @@ public class SumaAcumulativa extends Expresion {
 
     private Expresion limite;
     private Expresion arreglo;
+    private String nombreArreglo;
 
     private static int contadorSumaAcumulativa = 0;
     private final int idSuma;
@@ -23,6 +24,7 @@ public class SumaAcumulativa extends Expresion {
     public SumaAcumulativa(Expresion limite, Expresion arreglo, String nombreArreglo) {
         this.limite = limite;
         this.arreglo = arreglo;
+        this.nombreArreglo = nombreArreglo; // <-- NUEVO: Lo asignamos
         this.setTipoDato("FLOAT");
 
         this.idSuma = ++contadorSumaAcumulativa;
@@ -78,18 +80,36 @@ public class SumaAcumulativa extends Expresion {
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
+        // 1. Generamos el código del arreglo (sea variable o literal)
         codigo.append(arreglo.generarCodigo());
+
+        // 2. Extraemos el tamaño dinámicamente
+        String tipoArreglo = arreglo.getTipoDato();
+        int tamanoArreglo = 5; // Fallback seguro
+        if (tipoArreglo != null && tipoArreglo.contains("[") && tipoArreglo.contains("]")) {
+            try {
+                int inicio = tipoArreglo.indexOf('[') + 1;
+                int fin = tipoArreglo.indexOf(']');
+                tamanoArreglo = Integer.parseInt(tipoArreglo.substring(inicio, fin));
+            } catch (Exception ignored) {}
+        }
+
+        // --- 3. EL FIX MÁGICO: Enlazamos la variable temporal si es un literal ---
+        if (this.nombreArreglo != null && this.nombreArreglo.startsWith("_arr_temp_")) {
+            // Obtenemos el puntero del primer elemento del arreglo literal
+            String ptrPrimerElem = CodeGeneratorHelper.getNewPointer();
+            codigo.append(String.format("  %s = getelementptr [%d x double], [%d x double]* %s, i32 0, i32 0\n",
+                    ptrPrimerElem, tamanoArreglo, tamanoArreglo, arreglo.getIrRef()));
+
+            // Creamos la variable que AccesoArreglo está esperando encontrar
+            codigo.append(String.format("  %%%s = alloca double*\n", this.nombreArreglo));
+            codigo.append(String.format("  store double* %s, double** %%%s\n", ptrPrimerElem, this.nombreArreglo));
+        }
+
+        // 4. Generamos el código del límite
         codigo.append(limite.generarCodigo());
 
         // --- VALIDACIÓN DE LÍMITES (Bounds Checking Dinámico) ---
-        String tipoArreglo = arreglo.getTipoDato();
-        int tamanoArreglo = 999999;
-        if (tipoArreglo != null && tipoArreglo.contains("[") && tipoArreglo.contains("]")) {
-            int inicio = tipoArreglo.indexOf('[') + 1;
-            int fin = tipoArreglo.indexOf(']');
-            tamanoArreglo = Integer.parseInt(tipoArreglo.substring(inicio, fin));
-        }
-
         String labelOk = "lim_ok_" + CodeGeneratorHelper.getNewLabel();
         String labelError = "lim_err_" + CodeGeneratorHelper.getNewLabel();
         String regCond = CodeGeneratorHelper.getNewPointer();

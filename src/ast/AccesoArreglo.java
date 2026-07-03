@@ -30,7 +30,7 @@ public class AccesoArreglo extends Expresion {
         String tipoLLVM = "FLOAT".equals(this.getTipoDato()) ? "double" : "i32";
 
         String tipoDeclarado = Parser.Parser.tablaSimbolos.getType(id);
-        int tamanoArreglo = 0;
+        int tamanoArreglo = 999999;
 
         // --- EXTRACCIÓN SEGURA Y ROBUSTA ---
         try {

@@ -1,5 +1,5 @@
-integer: i, j, resultado, valor_leido_int
-FLOAT: f1, f2, valor_leido_float
+integer: i, j, valor_leido_int
+FLOAT: f1, f2, valor_leido_float, resultado
 BOOLEAN: b1, b2, valor_leido_bool
 FLOAT_ARRAY[5]: a1, a2, a3
 

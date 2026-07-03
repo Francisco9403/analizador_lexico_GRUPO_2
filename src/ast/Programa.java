@@ -52,8 +52,13 @@ public class Programa extends Nodo {
 
         resultado.append("declare void @exit(i32)\n\n");
 
+        // Formatos para PRINT (Con salto de línea)
         resultado.append("@.str.int = private constant [4 x i8] c\"%d\\0A\\00\"\n");
         resultado.append("@.str.float = private constant [4 x i8] c\"%f\\0A\\00\"\n");
+
+        // Formatos exclusivos para READ (Sin salto de línea y con formato nativo)
+        resultado.append("@.str.read_int = private constant [3 x i8] c\"%d\\00\"\n");
+        resultado.append("@.str.read_float = private constant [4 x i8] c\"%lf\\00\"\n");
 
         resultado.append(CodeGeneratorHelper.getGlobalStringsDef()).append("\n");
 
@@ -61,7 +66,7 @@ public class Programa extends Nodo {
         resultado.append("define i32 @main() {\n");
         resultado.append("entry:\n");
 
-        // Pegamos to-do lo que generamos al principio
+        // Pegamos to do lo que generamos al principio
         resultado.append(cuerpoMain.toString());
 
         resultado.append("  ret i32 0\n");

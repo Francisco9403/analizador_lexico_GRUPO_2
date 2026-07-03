@@ -26,6 +26,10 @@ public class OperacionAritmetica extends OperacionBinaria {
     public String generarCodigo() {
         StringBuilder codigo = new StringBuilder();
 
+        // 1. Generamos el código de los hijos primero
+        codigo.append(this.getIzquierda().generarCodigo());
+        codigo.append(this.getDerecha().generarCodigo());
+
         String tipoIzquierda = this.getIzquierda().getTipoDato();
         String tipoDerecha = this.getDerecha().getTipoDato();
 
@@ -34,9 +38,6 @@ public class OperacionAritmetica extends OperacionBinaria {
         // -----------------------------------------------------------------
         if ((tipoIzquierda != null && tipoIzquierda.startsWith("FLOAT_ARRAY")) ||
                 (tipoDerecha != null && tipoDerecha.startsWith("FLOAT_ARRAY"))) {
-
-            codigo.append(this.getIzquierda().generarCodigo());
-            codigo.append(this.getDerecha().generarCodigo());
 
             String tipoDeclarado = tipoIzquierda.startsWith("FLOAT_ARRAY") ? tipoIzquierda : tipoDerecha;
             int tamaño = 5;
@@ -70,30 +71,52 @@ public class OperacionAritmetica extends OperacionBinaria {
             // CUERPO DEL BUCLE
             codigo.append("\n").append(lblCuerpo).append(":\n");
 
-            // CORRECCIÓN: Pedir registros estrictamente en orden de uso LLVM
+            // PROCESAR OPERANDO IZQUIERDO (Con Auto-Cast)
             String valIzq;
-            if (tipoIzquierda.startsWith("FLOAT_ARRAY")) {
-                String elemPtrIzq = CodeGeneratorHelper.getNewPointer(); // Pide el %11
-                valIzq = CodeGeneratorHelper.getNewPointer();            // Pide el %12
+            if (tipoIzquierda != null && tipoIzquierda.startsWith("FLOAT_ARRAY")) {
+                String elemPtrIzq = CodeGeneratorHelper.getNewPointer();
+                valIzq = CodeGeneratorHelper.getNewPointer();
                 codigo.append(String.format("  %s = getelementptr double, double* %s, i32 %s\n",
                         elemPtrIzq, this.getIzquierda().getIrRef(), currentIdx));
                 codigo.append(String.format("  %s = load double, double* %s\n", valIzq, elemPtrIzq));
             } else {
+                String refIzq = this.getIzquierda().getIrRef();
+                // Coerción Implícita de INT a DOUBLE
+                if ("INT".equals(tipoIzquierda)) {
+                    if (!refIzq.startsWith("%")) {
+                        refIzq += ".0"; // Constante (ej. 10 -> 10.0)
+                    } else {
+                        String castReg = CodeGeneratorHelper.getNewPointer();
+                        codigo.append(String.format("  %s = sitofp i32 %s to double\n", castReg, refIzq));
+                        refIzq = castReg;
+                    }
+                }
                 valIzq = CodeGeneratorHelper.getNewPointer();
-                codigo.append(String.format("  %s = fadd double 0.0, %s\n", valIzq, this.getIzquierda().getIrRef()));
+                codigo.append(String.format("  %s = fadd double 0.0, %s\n", valIzq, refIzq));
             }
 
-            // CORRECCIÓN: Pedir registros estrictamente en orden de uso LLVM
+            // PROCESAR OPERANDO DERECHO (Con Auto-Cast)
             String valDer;
-            if (tipoDerecha.startsWith("FLOAT_ARRAY")) {
-                String elemPtrDer = CodeGeneratorHelper.getNewPointer(); // Pide el %13
-                valDer = CodeGeneratorHelper.getNewPointer();            // Pide el %14
+            if (tipoDerecha != null && tipoDerecha.startsWith("FLOAT_ARRAY")) {
+                String elemPtrDer = CodeGeneratorHelper.getNewPointer();
+                valDer = CodeGeneratorHelper.getNewPointer();
                 codigo.append(String.format("  %s = getelementptr double, double* %s, i32 %s\n",
                         elemPtrDer, this.getDerecha().getIrRef(), currentIdx));
                 codigo.append(String.format("  %s = load double, double* %s\n", valDer, elemPtrDer));
             } else {
+                String refDer = this.getDerecha().getIrRef();
+                // Coerción Implícita de INT a DOUBLE
+                if ("INT".equals(tipoDerecha)) {
+                    if (!refDer.startsWith("%")) {
+                        refDer += ".0"; // Constante (ej. 10 -> 10.0)
+                    } else {
+                        String castReg = CodeGeneratorHelper.getNewPointer();
+                        codigo.append(String.format("  %s = sitofp i32 %s to double\n", castReg, refDer));
+                        refDer = castReg;
+                    }
+                }
                 valDer = CodeGeneratorHelper.getNewPointer();
-                codigo.append(String.format("  %s = fadd double 0.0, %s\n", valDer, this.getDerecha().getIrRef()));
+                codigo.append(String.format("  %s = fadd double 0.0, %s\n", valDer, refDer));
             }
 
             String opLLVM = "fadd";
@@ -125,29 +148,61 @@ public class OperacionAritmetica extends OperacionBinaria {
         }
 
         // -----------------------------------------------------------------
-        // CASO B: Operaciones Escalares Estándar
+        // CASO B: Operaciones Escalares Estándar (Con Auto-Cast)
         // -----------------------------------------------------------------
-        codigo.append(this.getIzquierda().generarCodigo());
-        codigo.append(this.getDerecha().generarCodigo());
+        boolean hayFloat = "FLOAT".equals(tipoIzquierda) || "FLOAT".equals(tipoDerecha);
+        String refIzq = this.getIzquierda().getIrRef();
+        String refDer = this.getDerecha().getIrRef();
 
-        this.setIrRef(CodeGeneratorHelper.getNewPointer());
+        if (hayFloat) {
+            // Promoción del lado izquierdo si es INT
+            if ("INT".equals(tipoIzquierda)) {
+                if (!refIzq.startsWith("%")) {
+                    refIzq += ".0";
+                } else {
+                    String castReg = CodeGeneratorHelper.getNewPointer();
+                    codigo.append(String.format("  %s = sitofp i32 %s to double\n", castReg, refIzq));
+                    refIzq = castReg;
+                }
+            }
 
-        String tipoOperandos = this.getIzquierda().getTipoDato();
-        String typeLLVM = CodeGeneratorHelper.mapearTipoLLVM(tipoOperandos);
+            // Promoción del lado derecho si es INT
+            if ("INT".equals(tipoDerecha)) {
+                if (!refDer.startsWith("%")) {
+                    refDer += ".0";
+                } else {
+                    String castReg = CodeGeneratorHelper.getNewPointer();
+                    codigo.append(String.format("  %s = sitofp i32 %s to double\n", castReg, refDer));
+                    refDer = castReg;
+                }
+            }
 
-        String opLLVM;
-        boolean esFloat = tipoOperandos != null && tipoOperandos.equals("FLOAT");
-        switch(operador) {
-            case "+": opLLVM = esFloat ? "fadd" : "add"; break;
-            case "-": opLLVM = esFloat ? "fsub" : "sub"; break;
-            case "*": opLLVM = esFloat ? "fmul" : "mul"; break;
-            case "/": opLLVM = esFloat ? "fdiv" : "sdiv"; break;
-            default: opLLVM = "unknown_op";
+            this.setIrRef(CodeGeneratorHelper.getNewPointer());
+            String opLLVM;
+            switch(operador) {
+                case "+": opLLVM = "fadd"; break;
+                case "-": opLLVM = "fsub"; break;
+                case "*": opLLVM = "fmul"; break;
+                case "/": opLLVM = "fdiv"; break;
+                default: opLLVM = "unknown_op";
+            }
+            codigo.append(String.format("  %s = %s double %s, %s\n",
+                    this.getIrRef(), opLLVM, refIzq, refDer));
+
+        } else {
+            // Operación puramente entera
+            this.setIrRef(CodeGeneratorHelper.getNewPointer());
+            String opLLVM;
+            switch(operador) {
+                case "+": opLLVM = "add"; break;
+                case "-": opLLVM = "sub"; break;
+                case "*": opLLVM = "mul"; break;
+                case "/": opLLVM = "sdiv"; break;
+                default: opLLVM = "unknown_op";
+            }
+            codigo.append(String.format("  %s = %s i32 %s, %s\n",
+                    this.getIrRef(), opLLVM, refIzq, refDer));
         }
-
-        codigo.append(String.format("  %s = %s %s %s, %s\n",
-                this.getIrRef(), opLLVM, typeLLVM,
-                this.getIzquierda().getIrRef(), this.getDerecha().getIrRef()));
 
         return codigo.toString();
     }
